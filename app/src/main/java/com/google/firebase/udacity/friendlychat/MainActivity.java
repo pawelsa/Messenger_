@@ -15,7 +15,9 @@
  */
 package com.google.firebase.udacity.friendlychat;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -29,7 +31,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import com.firebase.ui.auth.AuthUI;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -37,6 +43,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String ANONYMOUS = "anonymous";
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
+    private static final int RC_SIGN_IN = 1;
+    private static final int RC_PHOTO_PICKER = 2;
 
     private ListView mMessageListView;
     private MessageAdapter mMessageAdapter;
@@ -53,90 +62,120 @@ public class MainActivity extends AppCompatActivity {
     private EditText mMessageEditText;
     private Button mSendButton;
 
-    private String mUsername;
+    private String mUsername = ANONYMOUS;
 
-    private FirebaseDatabase mFirebaseDatabase;
     private DatabaseReference mDatabaseReference;
+    private ChildEventListener childEventListener;
 
+    private FirebaseAuth firebaseAuth;
+    private FirebaseAuth.AuthStateListener authStateListener;
 
-
-    private void initializeReferencesToViews(){
-
-        // Initialize references to views
-        mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
-        mMessageListView = (ListView) findViewById(R.id.messageListView);
-        mPhotoPickerButton = (ImageButton) findViewById(R.id.photoPickerButton);
-        mMessageEditText = (EditText) findViewById(R.id.messageEditText);
-        mSendButton = (Button) findViewById(R.id.sendButton);
-    }
-
-    void childListener(){
-
-        mDatabaseReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-                FriendlyMessage receivedMessage = dataSnapshot.getValue(FriendlyMessage.class);
-                mMessageAdapter.add(receivedMessage);
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mUsername = ANONYMOUS;
 
         initializeReferencesToViews();
 
+        gettingDatabaseInstanceAndSettingUpAuthorization();
 
-        mFirebaseDatabase=FirebaseDatabase.getInstance();
-        mDatabaseReference=mFirebaseDatabase.getReference().child("messages");
+        listViewAndAdapterSetup();
 
-        childListener();
+        settingUpUIFunctionality();
+    }
 
 
+    private void initializeReferencesToViews() {
 
-        // Initialize message ListView and its adapter
+        mProgressBar = findViewById(R.id.progressBar);
+        mMessageListView = findViewById(R.id.messageListView);
+        mPhotoPickerButton = findViewById(R.id.photoPickerButton);
+        mMessageEditText = findViewById(R.id.messageEditText);
+        mSendButton = findViewById(R.id.sendButton);
+    }
+
+
+    private void gettingDatabaseInstanceAndSettingUpAuthorization() {
+
+        FirebaseDatabase mFirebaseDatabase = FirebaseDatabase.getInstance();
+
+        authorizationSetup();
+
+        mDatabaseReference = mFirebaseDatabase.getReference().child("messages");
+    }
+
+    private void authorizationSetup() {
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        authStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+
+                if (user != null) {
+
+                    Toast.makeText(getApplicationContext(), "Welcome to Friendly Chat", Toast.LENGTH_SHORT).show();
+                    onSignInInitialize(user.getDisplayName());
+                } else {
+
+                    onSignOutCleanup();
+                    startActivityForResult(
+                            AuthUI.getInstance()
+                                    .createSignInIntentBuilder()
+                                    .setIsSmartLockEnabled(false)
+                                    .setAvailableProviders(Arrays.asList(
+                                            new AuthUI.IdpConfig.EmailBuilder().build(),
+                                            new AuthUI.IdpConfig.GoogleBuilder().build()))
+                                    .build(),
+                            RC_SIGN_IN);
+                }
+            }
+        };
+    }
+
+    private void listViewAndAdapterSetup() {
+
         List<FriendlyMessage> friendlyMessages = new ArrayList<>();
         mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
         mMessageListView.setAdapter(mMessageAdapter);
+    }
 
-        // Initialize progress bar
+
+    private void settingUpUIFunctionality() {
+
+        setProgressBarVisibility();
+
+        photoPickerButtonFunctionality();
+
+        messageEditTextFunctionality();
+
+        sendButtonFunctionality();
+    }
+
+    private void setProgressBarVisibility() {
+
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+    }
 
-        // ImagePickerButton shows an image picker to upload a image for a message
+    private void photoPickerButtonFunctionality() {
+
         mPhotoPickerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO: Fire an intent to show an image picker
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/jpeg");
+                intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                startActivityForResult(Intent.createChooser(intent, "Complete action using"), RC_PHOTO_PICKER);
             }
         });
+    }
 
-        // Enable Send button when there's text to send
+    private void messageEditTextFunctionality() {
+
         mMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -156,19 +195,113 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         mMessageEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(DEFAULT_MSG_LENGTH_LIMIT)});
+    }
 
-        // Send button sends a message and clears the EditText
+    private void sendButtonFunctionality() {
+
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                FriendlyMessage newMessage=new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+                FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
 
                 mDatabaseReference.push().setValue(newMessage);
                 // Clear input box
                 mMessageEditText.setText("");
             }
         });
+    }
+
+
+    private void onSignInInitialize(String username) {
+
+        mUsername = username;
+
+        addMessageChildListener();
+    }
+
+    private void addMessageChildListener() {
+
+        if (childEventListener == null) {
+
+            childEventListener = new ChildEventListener() {
+                @Override
+                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+
+                    FriendlyMessage receivedMessage = dataSnapshot.getValue(FriendlyMessage.class);
+                    mMessageAdapter.add(receivedMessage);
+                }
+
+                @Override
+                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                }
+
+                @Override
+                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+
+            mDatabaseReference.addChildEventListener(childEventListener);
+        }
+    }
+
+    private void onSignOutCleanup() {
+
+        mUsername = ANONYMOUS;
+
+        removeMessageChildListener();
+    }
+
+    private void removeMessageChildListener() {
+
+        if (childEventListener != null) {
+            mDatabaseReference.removeEventListener(childEventListener);
+            childEventListener = null;
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (authStateListener != null) {
+            firebaseAuth.removeAuthStateListener(authStateListener);
+        }
+        removeMessageChildListener();
+        mMessageAdapter.clear();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            if (resultCode == RESULT_OK)
+                Toast.makeText(getApplicationContext(), "Succesfully signed in !", Toast.LENGTH_SHORT);
+            else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(getApplicationContext(), "Could't login", Toast.LENGTH_SHORT);
+                finish();
+            }
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        firebaseAuth.addAuthStateListener(authStateListener);
     }
 
     @Override
@@ -180,6 +313,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
+
+        switch (item.getItemId()) {
+            case R.id.sign_out_menu:
+                AuthUI.getInstance().signOut(this);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
+
 }
