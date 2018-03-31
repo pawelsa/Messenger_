@@ -2,8 +2,8 @@ package com.google.firebase.udacity.friendlychat;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
@@ -27,11 +27,10 @@ import com.google.firebase.storage.UploadTask;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.firebase.udacity.friendlychat.MainActivity.ANONYMOUS;
 import static com.google.firebase.udacity.friendlychat.MainActivity.authStateListener;
-import static com.google.firebase.udacity.friendlychat.MainActivity.changeUserOnlineStatus;
 import static com.google.firebase.udacity.friendlychat.MainActivity.firebaseAuth;
 import static com.google.firebase.udacity.friendlychat.MainActivity.mUsername;
+import static com.google.firebase.udacity.friendlychat.Managers.UserManager.changeUserOnlineStatus;
 
 public class MessageActivity extends AppCompatActivity {
 

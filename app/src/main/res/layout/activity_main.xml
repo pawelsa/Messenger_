@@ -5,9 +5,23 @@
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/userList"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_below="@+id/show_all_users"
+        android:orientation="vertical" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/allUsersList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/show_all_users"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show all users" />
 
 
 </RelativeLayout>

@@ -7,7 +7,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.udacity.friendlychat.Managers.ListOfConversationsManager;
+import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +25,13 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
     private Context context;
 
-    private List<String> usernameList;
+    private List<ChatRoom> chatRoomList;
+    private List<ChatRoom> finalListChatRoom;
 
-    public UsersAdapter(Context context) {
+    UsersAdapter(Context context) {
         this.context = context;
-        this.usernameList = new ArrayList<>();
+        this.chatRoomList = new ArrayList<>();
+        this.finalListChatRoom = new ArrayList<>();
     }
 
     @Override
@@ -40,37 +47,114 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
 
-        holder.userNameTextView.setText(usernameList.get(position));
+        holder.userNameTextView.setText(finalListChatRoom.get(position).conversationalist.User_Name);
+        holder.userOnlineStatusTextView.setText(Boolean.toString(finalListChatRoom.get(position).conversationalist.isOnline));
+
+        holder.userItemLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
+                Log.i("Arraysize", Integer.toString(finalListChatRoom.size()) + "   " + Integer.toString(chatRoomList.size()));
+                if (finalListChatRoom.get(position).isEmpty()) {
+                    ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
+                }
+            }
+        });
+
     }
 
     @Override
     public int getItemCount() {
-        return usernameList.size();
+        return finalListChatRoom.size();
     }
 
-    public void add(String username) {
+    void add(ChatRoom chatRoom) {
 
-        usernameList.add(username);
-        Log.i("UserAdded", username);
+        if (chatRoom.conversationalist == null) {
+            chatRoomList.add(chatRoom);
+            startLookingForConversationalist(getConversationalistID(chatRoom));
+        } else
+            finalListChatRoom.add(chatRoom);
         notifyDataSetChanged();
     }
 
-    public void clear() {
+    private String getConversationalistID(ChatRoom chatRoom) {
 
-        usernameList.clear();
+        if (!chatRoom.chatRoomObject.myID.equals(UserManager.currentUser.User_ID)) {
+            return chatRoom.chatRoomObject.myID;
+        } else if (!chatRoom.chatRoomObject.conversationalistID.equals(UserManager.currentUser.User_ID)) {
+            return chatRoom.chatRoomObject.conversationalistID;
+        } else
+            return null;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    private void startLookingForConversationalist(String conversationalistID) {
+        if (conversationalistID != null)
+            UserManager.findUser(conversationalistID);
+    }
+
+    void updateList(ChatRoom chatRoom) {
+
+        for (int i = 0; i < chatRoomList.size(); i++) {
+            if (chatRoomEquals(i, chatRoom)) {
+                chatRoomList.set(i, chatRoom);
+                notifyDataSetChanged();
+                return;
+            }
+        }
+        add(chatRoom);
+    }
+
+    private boolean chatRoomEquals(int i, ChatRoom chatRoom) {
+        if (chatRoomList.get(i).chatRoomObject != null && chatRoomList.get(i).chatRoomObject.conversationID != null)
+            return chatRoomList.get(i).chatRoomObject.conversationID.equals(chatRoom.chatRoomObject.conversationID);
+        else
+            return false;
+    }
+
+    //TODO: Maybe there is better way to check it
+    void pushUser(User pushedUser) {
+
+        for (ChatRoom chatRoom : chatRoomList) {
+            if (chatRoom.chatRoomObject.conversationalistID.equals(pushedUser.User_ID) || chatRoom.chatRoomObject.myID.equals(pushedUser.User_ID)) {
+                chatRoom.conversationalist = pushedUser;
+                finalListChatRoom.add(chatRoom);
+                chatRoomList.remove(chatRoom);
+                notifyDataSetChanged();
+                return;
+            }
+        }
+        for (ChatRoom chatRoom : finalListChatRoom) {
+            if (chatRoom.conversationalist != null && chatRoom.conversationalist.User_ID.equals(pushedUser.User_ID)) {
+                chatRoom.conversationalist = pushedUser;
+                notifyDataSetChanged();
+                return;
+            }
+        }
+    }
+
+    void clear() {
+        finalListChatRoom.clear();
+        chatRoomList.clear();
+        notifyDataSetChanged();
+    }
+
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView userNameTextView;
         ImageView userAvatarImageView;
+        TextView userOnlineStatusTextView;
+        LinearLayout userItemLayout;
 
         ViewHolder(View view) {
             super(view);
             userNameTextView = view.findViewById(R.id.userName);
             userAvatarImageView = view.findViewById(R.id.userAvatar);
+            userOnlineStatusTextView = view.findViewById(R.id.onlineStatus);
+            userItemLayout = view.findViewById(R.id.user_item_layout);
         }
     }
 }
