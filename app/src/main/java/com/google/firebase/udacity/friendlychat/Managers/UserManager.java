@@ -2,6 +2,7 @@ package com.google.firebase.udacity.friendlychat.Managers;
 
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -24,33 +25,77 @@ public class UserManager {
 
     public static User currentUser;
     private static String currentUserID;
-
-    private static OnCurrentUserDownloadListener mOnCurrentUserDownloadListener;
-    private static OnUserDownloadListener mOnUserDownloadListener;
-
-
-    public UserManager() {
-
+    
+    private OnUserDownloadListener mOnUserDownloadListener;
+    
+    public UserManager(OnUserDownloadListener onUserDownloadListener) {
+        
+        setOnUserDownloadListener(onUserDownloadListener);
         currentUserID = getUserIDFromFirebaseAuth();
+        getCurrentUserFromServer();
     }
 
     private static String getUserIDFromFirebaseAuth() {
-
-        return MainActivity.firebaseAuth.getCurrentUser().getUid();
+    
+        return getUserFromFireBaseAuth().getUid();
     }
-
-
-    public static void getCurrentUserFromServer() {
+    
+    private static FirebaseUser getUserFromFireBaseAuth() {
+        
+        return MainActivity.firebaseAuth.getCurrentUser();
+    }
+    
+    public static String getCurrentUserID() {
+        
+        return currentUserID;
+    }
+    
+    private static void createNewUserAndPush() {
+        
+        if (MainActivity.firebaseAuth.getCurrentUser() != null) {
+            String userID = getUserIDFromFirebaseAuth();
+            String displayName = getUserFromFireBaseAuth().getDisplayName();
+            
+            currentUser = new User(userID, displayName, true);
+            
+            DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + userID);
+            userReference.setValue(currentUser);
+        }
+    }
+    
+    public static void onSignOut() {
+        
+        changeUserOnlineStatus(false);
+        currentUser = null;
+        currentUserID = null;
+    }
+    
+    public static void changeUserOnlineStatus(boolean isOnline) {
+        
+        if (currentUser != null) {
+            Map<String, Object> timestamp = new HashMap<>();
+            timestamp.put("timestamp", ServerValue.TIMESTAMP);
+            
+            Map<String, Object> updateStatus = new HashMap<>();
+            updateStatus.put("isOnline", isOnline);
+            updateStatus.put("timestamp", timestamp);
+            
+            DatabaseReference referenceToUpdateUserStatus = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserID);
+            referenceToUpdateUserStatus.updateChildren(updateStatus);
+        }
+    }
+    
+    private void getCurrentUserFromServer() {
 
         if (currentUser == null) {
             if (currentUserID == null)
                 currentUserID = getUserIDFromFirebaseAuth();
             findUser(currentUserID);
         }
+        else if (mOnUserDownloadListener != null) mOnUserDownloadListener.userDownloaded();
     }
-
-
-    public static void findUser(final String mUserID) {
+    
+    public void findUser(final String mUserID) {
 
         ValueEventListener userChangeListener = createUserChangeListener(mUserID);
 
@@ -61,8 +106,8 @@ public class UserManager {
         else
             userReference.addListenerForSingleValueEvent(userChangeListener);
     }
-
-    private static ValueEventListener createUserChangeListener(final String mUserID) {
+    
+    private ValueEventListener createUserChangeListener(final String mUserID) {
 
         return new ValueEventListener() {
             @Override
@@ -70,7 +115,6 @@ public class UserManager {
 
                 if (userData.exists()) {
 
-                    Log.i("UserData", "Exist");
                     downloadUserFromDatabase(userData, mUserID);
                 } else if (currentUserExistInDatabase(userData, mUserID)) {
 
@@ -81,66 +125,34 @@ public class UserManager {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
-                Log.i("UserData", "Error during listening for user in database. Error message: " + databaseError.getMessage());
             }
         };
     }
-
-    private static boolean currentUserExistInDatabase(DataSnapshot userData, String mUserID) {
+    
+    private boolean currentUserExistInDatabase(DataSnapshot userData, String mUserID) {
 
         return !userData.exists() && mUserID.equals(currentUserID);
     }
-
-    private static void downloadUserFromDatabase(DataSnapshot userData, String mUserID) {
+    
+    private void downloadUserFromDatabase(DataSnapshot userData, String mUserID) {
 
         User downloadedUser = userData.getValue(User.class);
-
-        if (mUserID.equals(currentUserID)) {
+        
+        if (mUserID.equals(currentUserID) && currentUser == null) {
+            Log.i("UserData", "Exist current");
             currentUser = downloadedUser;
-            mOnCurrentUserDownloadListener.userDownloaded();
+            mOnUserDownloadListener.userDownloaded();
         } else {
+            Log.i("UserData", "Exist");
             mOnUserDownloadListener.userDownloaded(downloadedUser);
         }
     }
-
-    private static void createNewUserAndPush() {
-
-        if (MainActivity.firebaseAuth.getCurrentUser() != null) {
-            String userID = getUserIDFromFirebaseAuth();
-            String displayName = MainActivity.firebaseAuth.getCurrentUser().getDisplayName();
-
-            currentUser = new User(userID, displayName, true);
-
-            DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + userID);
-            userReference.setValue(currentUser);
-        }
+    
+    public void clear() {
+        mOnUserDownloadListener = null;
     }
-
-
-    public static void onSignOut() {
-
-        changeUserOnlineStatus(false);
-        currentUser = null;
-        currentUserID = null;
-    }
-
-    public static void changeUserOnlineStatus(boolean isOnline) {
-
-        if (currentUser != null) {
-            Map<String, Object> timestamp = new HashMap<>();
-            timestamp.put("timestamp", ServerValue.TIMESTAMP);
-
-            Map<String, Object> updateStatus = new HashMap<>();
-            updateStatus.put("isOnline", isOnline);
-            updateStatus.put("timestamp", timestamp);
-
-            DatabaseReference referenceToUpdateUserStatus = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserID);
-            referenceToUpdateUserStatus.updateChildren(updateStatus);
-        }
-    }
-
-    public static void downloadAllUsers() {
+    
+    public void downloadAllUsers() {
 
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("users");
 
@@ -148,9 +160,9 @@ public class UserManager {
 
         reference.limitToFirst(10).addChildEventListener(childEventListener);
     }
-
-
-    private static ChildEventListener allUsersListener() {
+    
+    
+    private ChildEventListener allUsersListener() {
 
         return new ChildEventListener() {
             @Override
@@ -181,22 +193,13 @@ public class UserManager {
             }
         };
     }
-
-
-    public static void setOnCurrentUserDownloadListener(OnCurrentUserDownloadListener mOnCurrentUserDownloadListener) {
-        UserManager.mOnCurrentUserDownloadListener = mOnCurrentUserDownloadListener;
-    }
-
-    public static void setOnUserDownloadListener(OnUserDownloadListener mOnUserDownloadListener) {
-        UserManager.mOnUserDownloadListener = mOnUserDownloadListener;
-    }
-
-    public interface OnCurrentUserDownloadListener {
-
-        void userDownloaded();
+    
+    public void setOnUserDownloadListener(OnUserDownloadListener OnUserDownloadListener) {
+        mOnUserDownloadListener = OnUserDownloadListener;
     }
 
     public interface OnUserDownloadListener {
+        void userDownloaded();
         void userDownloaded(User downloadedUser);
     }
 }

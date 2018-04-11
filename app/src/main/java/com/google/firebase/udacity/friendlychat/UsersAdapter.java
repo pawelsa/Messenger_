@@ -2,7 +2,6 @@ package com.google.firebase.udacity.friendlychat;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,16 +21,17 @@ import java.util.List;
  */
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
-
+    
+    private UserManager userManager;
     private Context context;
-
     private List<ChatRoom> chatRoomList;
     private List<ChatRoom> finalListChatRoom;
-
-    UsersAdapter(Context context) {
+    
+    UsersAdapter(Context context, UserManager.OnUserDownloadListener onUserDownloadListener) {
         this.context = context;
         this.chatRoomList = new ArrayList<>();
         this.finalListChatRoom = new ArrayList<>();
+        this.userManager = new UserManager(onUserDownloadListener);
     }
 
     @Override
@@ -57,13 +57,12 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
             public void onClick(View v) {
 
                 Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
-                Log.i("Arraysize", Integer.toString(finalListChatRoom.size()) + "   " + Integer.toString(chatRoomList.size()));
+
                 if (finalListChatRoom.get(position).isEmpty()) {
                     ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
                 }
             }
         });
-
     }
 
     @Override
@@ -82,18 +81,18 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     private String getConversationalistID(ChatRoom chatRoom) {
-
-        if (!chatRoom.chatRoomObject.myID.equals(UserManager.currentUser.User_ID)) {
+    
+        if (!chatRoom.chatRoomObject.myID.equals(UserManager.getCurrentUserID())) {
             return chatRoom.chatRoomObject.myID;
-        } else if (!chatRoom.chatRoomObject.conversationalistID.equals(UserManager.currentUser.User_ID)) {
+        }
+        else if (!chatRoom.chatRoomObject.conversationalistID.equals(UserManager.getCurrentUserID())) {
             return chatRoom.chatRoomObject.conversationalistID;
         } else
             return null;
     }
 
     private void startLookingForConversationalist(String conversationalistID) {
-        if (conversationalistID != null)
-            UserManager.findUser(conversationalistID);
+        if (conversationalistID != null) userManager.findUser(conversationalistID);
     }
 
     void updateList(ChatRoom chatRoom) {
@@ -109,10 +108,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     private boolean chatRoomEquals(int i, ChatRoom chatRoom) {
-        if (chatRoomList.get(i).chatRoomObject != null && chatRoomList.get(i).chatRoomObject.conversationID != null)
-            return chatRoomList.get(i).chatRoomObject.conversationID.equals(chatRoom.chatRoomObject.conversationID);
-        else
-            return false;
+        return chatRoomList.get(i).chatRoomObject != null && chatRoomList.get(i).chatRoomObject.conversationID != null && chatRoomList.get(i).chatRoomObject.conversationID.equals(chatRoom.chatRoomObject.conversationID);
     }
 
     //TODO: Maybe there is better way to check it

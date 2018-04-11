@@ -21,11 +21,10 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -39,7 +38,7 @@ import java.util.Arrays;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.changeUserOnlineStatus;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.currentUser;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements UserManager.OnUserDownloadListener, ChatRoomListener.OnConversationListener {
 
     public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 1;
@@ -47,12 +46,11 @@ public class MainActivity extends AppCompatActivity {
     public static String mUsername = ANONYMOUS;
     public static FirebaseAuth firebaseAuth;
     public static FirebaseAuth.AuthStateListener authStateListener;
-    UsersAdapter adapter;
-    UserManager.OnCurrentUserDownloadListener onCurrentUserDownloadListener;
-    private RecyclerView userListRecyclerView;
+    
+    private ListOfConversationsManager conversationsManager;
+    private UserManager userManager;
     private RecyclerView allUsersRecyclerView;
-    private UsersAdapter allUsersAdapter;
-    private Button showAllUsers;
+    private UsersAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +58,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         authorizationSetup();
-        setOnUserDownloadListener();
 
-        userListRecyclerView = findViewById(R.id.userList);
         allUsersRecyclerView = findViewById(R.id.allUsersList);
-        showAllUsers = findViewById(R.id.show_all_users);
+        createAdapterAndSetupRecyclerView();
     }
 
     private void authorizationSetup() {
@@ -76,13 +72,20 @@ public class MainActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
 
                 FirebaseUser user = firebaseAuth.getCurrentUser();
-
+    
                 if (user == null) {
                     UserManager.onSignOut();
                     startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
                 }
+                else {
+                    setupUserManager();
+                }
             }
         };
+    }
+    
+    private void setupUserManager() {
+        if (userManager == null) userManager = new UserManager(this);
     }
 
     private Intent createSignUpOrLoginScreenIntent() {
@@ -95,98 +98,56 @@ public class MainActivity extends AppCompatActivity {
                         new AuthUI.IdpConfig.GoogleBuilder().build()))
                 .build();
     }
-
-    private void setOnUserDownloadListener() {
-
-        onCurrentUserDownloadListener = createOnUserDownloadListener();
-        UserManager.setOnCurrentUserDownloadListener(onCurrentUserDownloadListener);
+    
+    private void createAdapterAndSetupRecyclerView() {
+        
+        adapter = new UsersAdapter(this, this);
+        allUsersRecyclerView.setAdapter(adapter);
+        allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
-
-    private UserManager.OnCurrentUserDownloadListener createOnUserDownloadListener() {
-
-        return new UserManager.OnCurrentUserDownloadListener() {
-            @Override
-            public void userDownloaded() {
-
-                changeUserOnlineStatus(true);
-                createContactList();
-                ListOfConversationsManager.setOnConversationListener(createConversationListener());
-                ListOfConversationsManager.setLoadConversationIDsListener();
-
-                showAllUsers.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        userListRecyclerView.setVisibility(View.GONE);
-                        allUsersRecyclerView.setVisibility(View.VISIBLE);
-                        showAllUsers.setVisibility(View.GONE);
-
-                        allUsersAdapter = new UsersAdapter(getApplicationContext());
-                        allUsersRecyclerView.setAdapter(allUsersAdapter);
-                        allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
-
-                        UserManager.downloadAllUsers();
-                    }
-                });
-
-                UserManager.setOnUserDownloadListener(new UserManager.OnUserDownloadListener() {
-                    @Override
-                    public void userDownloaded(User downloadedUser) {
-
-                        if (allUsersAdapter != null)
-                            allUsersAdapter.add(new ChatRoom(downloadedUser));
-                        else
-                            adapter.pushUser(downloadedUser);
-                    }
-                });
-            }
-        };
-    }
-
-    private ListOfConversationsManager.OnConversationListener createConversationListener() {
-
-        return new ListOfConversationsManager.OnConversationListener() {
-            @Override
-            public void addConversationToAdapter(ChatRoomObject conversation) {
-
-                adapter.updateList(new ChatRoom(conversation));
-            }
-        };
-    }
-
 
     @Override
     protected void onPause() {
         super.onPause();
-
+    
+        changeUserOnlineStatus(false);
+        
         if (authStateListener != null)
             firebaseAuth.removeAuthStateListener(authStateListener);
-        /*if (adapter != null)
+        if (adapter != null)
             adapter.clear();
-        if (allUsersAdapter != null)
-            allUsersAdapter.clear();*/
-        if (onCurrentUserDownloadListener != null) {
-            onCurrentUserDownloadListener = null;
+        if (userManager != null) {
+            userManager.clear();
+            userManager = null;
         }
-        changeUserOnlineStatus(false);
+        if (conversationsManager != null) {
+            conversationsManager.clear();
+            conversationsManager = null;
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        changeUserOnlineStatus(true);
-        firebaseAuth.addAuthStateListener(authStateListener);
-        if (userLoggedInButNotDownloaded()) {
-            UserManager.getCurrentUserFromServer();
+    
+        if (authStateListener == null) {
+            authorizationSetup();
         }
-        setOnUserDownloadListener();
-    }
-
-    private void createContactList() {
-
-        adapter = new UsersAdapter(this);
-        userListRecyclerView.setAdapter(adapter);
-        userListRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        else {
+            firebaseAuth.addAuthStateListener(authStateListener);
+        }
+        
+        changeUserOnlineStatus(true);
+    
+        if (conversationsManager == null) {
+            conversationsManager = new ListOfConversationsManager();
+        }
+        if (userManager == null) {
+            userManager = new UserManager(this);
+        }
+        if (adapter == null) {
+            adapter = new UsersAdapter(this, this);
+        }
     }
 
 
@@ -196,9 +157,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == RC_SIGN_IN) {
             if (resultCode == RESULT_OK) {
-
-                if (userLoggedInButNotDownloaded())
-                    UserManager.getCurrentUserFromServer();
+    
+                if (userLoggedInButNotDownloaded() && userManager == null) {
+                    userManager = new UserManager(this);
+                }
 
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(), "Could't login", Toast.LENGTH_SHORT).show();
@@ -234,5 +196,27 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
+    
+    @Override
+    public void addConversationToAdapter(ChatRoomObject conversation) {
+        if (adapter != null) adapter.updateList(new ChatRoom(conversation));
+    }
+    
+    @Override
+    public void userDownloaded() {
+        Log.i("Start", "userDownloaded");
+        setupConversationListener();
+    }
+    
+    private void setupConversationListener() {
+        if (conversationsManager != null) {
+            Log.i("Build", "createOnUser...");
+            conversationsManager.loadConversations(this);
+        }
+    }
+    
+    @Override
+    public void userDownloaded(User downloadedUser) {
+        if (adapter != null) adapter.pushUser(downloadedUser);
+    }
 }
