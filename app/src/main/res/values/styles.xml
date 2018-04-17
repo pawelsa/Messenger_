@@ -16,4 +16,16 @@
         <item name="android:textColor">@color/colorTitle</item>
 
     </style>
+
+    <style name="MainTheme" parent="AppTheme">
+        <item name="android:colorBackground">@color/background_material_light</item>
+        <item name="android:colorForeground">#FFF</item>
+        <item name="android:textColorPrimary">@color/text_color_primary</item>
+    </style>
+
+    <style name="ConversationTheme" parent="MainTheme">
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
 </resources>

@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     public static String mUsername = ANONYMOUS;
     public static FirebaseAuth firebaseAuth;
     public static FirebaseAuth.AuthStateListener authStateListener;
-    
+
     private ListOfConversationsManager conversationsManager;
     private UserManager userManager;
     private RecyclerView allUsersRecyclerView;
@@ -57,65 +57,24 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        authorizationSetup();
 
-        allUsersRecyclerView = findViewById(R.id.allUsersList);
-        createAdapterAndSetupRecyclerView();
     }
 
-    private void authorizationSetup() {
 
-        firebaseAuth = FirebaseAuth.getInstance();
-
-        authStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-    
-                if (user == null) {
-                    UserManager.onSignOut();
-                    startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
-                }
-                else {
-                    setupUserManager();
-                }
-            }
-        };
-    }
-    
-    private void setupUserManager() {
-        if (userManager == null) userManager = new UserManager(this);
-    }
-
-    private Intent createSignUpOrLoginScreenIntent() {
-
-        return AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setIsSmartLockEnabled(false)
-                .setAvailableProviders(Arrays.asList(
-                        new AuthUI.IdpConfig.EmailBuilder().build(),
-                        new AuthUI.IdpConfig.GoogleBuilder().build()))
-                .build();
-    }
-    
-    private void createAdapterAndSetupRecyclerView() {
-        
-        adapter = new UsersAdapter(this, this);
-        allUsersRecyclerView.setAdapter(adapter);
-        allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-    }
 
     @Override
     protected void onPause() {
         super.onPause();
-    
+
+        Log.i("State", "OnPause");
         changeUserOnlineStatus(false);
-        
+
         if (authStateListener != null)
             firebaseAuth.removeAuthStateListener(authStateListener);
-        if (adapter != null)
+        if (adapter != null) {
             adapter.clear();
+            adapter = null;
+        }
         if (userManager != null) {
             userManager.clear();
             userManager = null;
@@ -129,27 +88,64 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     @Override
     protected void onResume() {
         super.onResume();
-    
-        if (authStateListener == null) {
-            authorizationSetup();
-        }
-        else {
-            firebaseAuth.addAuthStateListener(authStateListener);
-        }
-        
-        changeUserOnlineStatus(true);
-    
-        if (conversationsManager == null) {
-            conversationsManager = new ListOfConversationsManager();
-        }
-        if (userManager == null) {
-            userManager = new UserManager(this);
-        }
-        if (adapter == null) {
-            adapter = new UsersAdapter(this, this);
+        authorizationSetup();
+    }
+
+    private void authorizationSetup() {
+
+        firebaseAuth = FirebaseAuth.getInstance();
+
+        authStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user == null) {
+                    UserManager.onSignOut();
+                    startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
+                } else {
+                    setupUserManager();
+                }
+            }
+        };
+
+        firebaseAuth.addAuthStateListener(authStateListener);
+    }
+
+    private void setupUserManager() {
+        if (userLoggedInButNotDownloaded() || userManager == null) {
+            resume();
+            createAdapterAndSetupRecyclerView();
         }
     }
 
+    private void resume() {
+
+        changeUserOnlineStatus(true);
+
+        userManager = new UserManager(this);
+        conversationsManager = new ListOfConversationsManager();
+        adapter = new UsersAdapter(this, this);
+    }
+
+    private Intent createSignUpOrLoginScreenIntent() {
+
+        return AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setIsSmartLockEnabled(false)
+                .setAvailableProviders(Arrays.asList(
+                        new AuthUI.IdpConfig.EmailBuilder().build(),
+                        new AuthUI.IdpConfig.GoogleBuilder().build()))
+                .build();
+    }
+
+    private void createAdapterAndSetupRecyclerView() {
+
+        allUsersRecyclerView = findViewById(R.id.allUsersList);
+        adapter = new UsersAdapter(this, this);
+        allUsersRecyclerView.setAdapter(adapter);
+        allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -157,10 +153,8 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
         if (requestCode == RC_SIGN_IN) {
             if (resultCode == RESULT_OK) {
-    
-                if (userLoggedInButNotDownloaded() && userManager == null) {
-                    userManager = new UserManager(this);
-                }
+
+                setupUserManager();
 
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(), "Could't login", Toast.LENGTH_SHORT).show();
@@ -196,25 +190,25 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
                 return super.onOptionsItemSelected(item);
         }
     }
-    
+
     @Override
     public void addConversationToAdapter(ChatRoomObject conversation) {
         if (adapter != null) adapter.updateList(new ChatRoom(conversation));
     }
-    
+
     @Override
     public void userDownloaded() {
         Log.i("Start", "userDownloaded");
         setupConversationListener();
     }
-    
+
     private void setupConversationListener() {
         if (conversationsManager != null) {
             Log.i("Build", "createOnUser...");
             conversationsManager.loadConversations(this);
         }
     }
-    
+
     @Override
     public void userDownloaded(User downloadedUser) {
         if (adapter != null) adapter.pushUser(downloadedUser);

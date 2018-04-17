@@ -47,7 +47,9 @@ dependencies {
     compile 'com.android.support:appcompat-v7:26.1.0'
 
     // Displaying images
-    compile 'com.github.bumptech.glide:glide:3.6.1'
+    implementation 'com.github.bumptech.glide:glide:4.6.1'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.6.1'
+    implementation 'jp.wasabeef:glide-transformations:3.2.0'
 }
 
 

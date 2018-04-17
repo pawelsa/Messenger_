@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/image_message_profile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
+        android:background="@color/colorAccent"
+        android:maxWidth="80dp"
+        android:src="@drawable/ic_person" />
+
+    <TextView
+        android:id="@+id/text_message_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/text_message_body"
+        android:layout_alignLeft="@+id/text_message_body"
+        android:layout_alignStart="@+id/text_message_body"
+        android:text="John Doe"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/text_message_body"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="10dp"
+        android:layout_toEndOf="@+id/image_message_profile"
+        android:layout_toRightOf="@+id/image_message_profile"
+        android:background="@drawable/message_rectangle"
+        android:maxWidth="240dp"
+        android:padding="8dp"
+        android:text="hi man, how are you?"
+        android:textColor="#ffffff" />
+
+    <TextView
+        android:id="@+id/text_message_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/text_message_body"
+        android:layout_alignRight="@+id/text_message_body"
+        android:layout_alignTop="@+id/text_message_name"
+        android:text="11:40"
+        android:textSize="10sp" />
+
+</RelativeLayout>

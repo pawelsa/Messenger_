@@ -1,107 +1,99 @@
 package com.google.firebase.udacity.friendlychat;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
-import android.widget.ProgressBar;
+import android.widget.ImageView;
+import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 
 import static com.google.firebase.udacity.friendlychat.MainActivity.authStateListener;
 import static com.google.firebase.udacity.friendlychat.MainActivity.firebaseAuth;
 import static com.google.firebase.udacity.friendlychat.MainActivity.mUsername;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.changeUserOnlineStatus;
 
-public class MessageActivity extends AppCompatActivity {
+public class MessageActivity extends AppCompatActivity implements ChatRoomListener.OnConversationListener, UserManager.OnUserDownloadListener {
 
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
     private static final int RC_PHOTO_PICKER = 2;
 
-    private ListView mMessageListView;
-    private MessageAdapter mMessageAdapter;
-    private ProgressBar mProgressBar;
+    private ChatRoom conversation;
+    private ChatRoomListener listener;
+    private UserManager userManager;
+
+    // private MessageAdapter mMessageAdapter;
     private ImageButton mPhotoPickerButton;
     private EditText mMessageEditText;
-    private Button mSendButton;
+    private ImageView mSendButton;
 
-    private FirebaseDatabase mFirebaseDatabase;
-    private DatabaseReference mDatabaseReference;
-    private FirebaseStorage firebaseStorage;
-    private StorageReference storagePhotosReference;
-
-    private ChildEventListener childEventListener;
+    public MessageActivity() {
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message);
 
-        initializeReferencesToViews();
+        //Get the default actionbar instance
+        android.support.v7.app.ActionBar mActionBar = getSupportActionBar();
+
+        mActionBar.setSubtitle("OnlineStatus");
+
+        Intent intent = getIntent();
+
+        if (intent != null) {
+            String conversationID = intent.getStringExtra("conversationID");
+            String conversationalistName = intent.getStringExtra("displayName");
+            if (conversationID != null) {
+                listener = new ChatRoomListener(conversationID, this);
+                Toast.makeText(this, conversationID, Toast.LENGTH_LONG).show();
+            }
+            if (conversationalistName != null) {
+                setTitle(conversationalistName);
+            }
+        }
 
 
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
-        firebaseStorage = FirebaseStorage.getInstance();
-        mDatabaseReference = mFirebaseDatabase.getReference().child("messages");
-        storagePhotosReference = firebaseStorage.getReference().child("chat_photos");
+
+/*        initializeReferencesToViews();
 
         addMessageChildListener();
 
         listViewAndAdapterSetup();
-
-        settingUpUIFunctionality();
-    }
-
-    private void initializeReferencesToViews() {
-
-        mProgressBar = findViewById(R.id.progressBar);
-        mMessageListView = findViewById(R.id.messageListView);
-        mPhotoPickerButton = findViewById(R.id.photoPickerButton);
-        mMessageEditText = findViewById(R.id.messageEditText);
-        mSendButton = findViewById(R.id.sendButton);
-    }
-
-    private void listViewAndAdapterSetup() {
-
-        List<FriendlyMessage> friendlyMessages = new ArrayList<>();
-        mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
-        mMessageListView.setAdapter(mMessageAdapter);
+*/
+        //settingUpUIFunctionality();
     }
 
 
+    /*
+        private void initializeReferencesToViews() {
+
+            mMessageListView = findViewById(R.id.messageListView);
+            mPhotoPickerButton = findViewById(R.id.photoPickerButton);
+            mMessageEditText = findViewById(R.id.messageEditText);
+            mSendButton = findViewById(R.id.sendButton);
+        }
+
+        private void listViewAndAdapterSetup() {
+
+
+        }
+
+    */
     private void settingUpUIFunctionality() {
-
-        setProgressBarVisibility();
 
         photoPickerButtonFunctionality();
 
         messageEditTextFunctionality();
 
         sendButtonFunctionality();
-    }
-
-    private void setProgressBarVisibility() {
-
-        mProgressBar.setVisibility(ProgressBar.INVISIBLE);
     }
 
     private void photoPickerButtonFunctionality() {
@@ -149,56 +141,14 @@ public class MessageActivity extends AppCompatActivity {
 
                 FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
 
-                mDatabaseReference.push().setValue(newMessage);
-                // Clear input box
-                mMessageEditText.setText("");
+                if (newMessage.getText().trim().length() > 0) {
+
+                    // mDatabaseReference.push().setValue(newMessage);
+                    // Clear input box
+                    mMessageEditText.setText("");
+                }
             }
         });
-    }
-
-    private void addMessageChildListener() {
-
-        if (childEventListener == null) {
-
-            childEventListener = new ChildEventListener() {
-                @Override
-                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-                    FriendlyMessage receivedMessage = dataSnapshot.getValue(FriendlyMessage.class);
-                    mMessageAdapter.add(receivedMessage);
-                }
-
-                @Override
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                }
-
-                @Override
-                public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                }
-
-                @Override
-                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            };
-
-            mDatabaseReference.addChildEventListener(childEventListener);
-        }
-    }
-
-    private void removeMessageChildListener() {
-
-        if (childEventListener != null) {
-            mDatabaseReference.removeEventListener(childEventListener);
-            childEventListener = null;
-        }
     }
 
     @Override
@@ -208,8 +158,8 @@ public class MessageActivity extends AppCompatActivity {
         if (authStateListener != null) {
             firebaseAuth.removeAuthStateListener(authStateListener);
         }
-        removeMessageChildListener();
-        mMessageAdapter.clear();
+        //removeMessageChildListener();
+        //mMessageAdapter.clear();
         changeUserOnlineStatus(false);
     }
 
@@ -217,7 +167,7 @@ public class MessageActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
+/*        if (requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
             Uri photoUri = data.getData();
             final StorageReference photoReference = storagePhotosReference.child(photoUri.getLastPathSegment());
 
@@ -228,6 +178,29 @@ public class MessageActivity extends AppCompatActivity {
                     mDatabaseReference.push().setValue(friendlyMessageWithPhoto);
                 }
             });
+        }*/
+    }
+
+    @Override
+    public void addConversationToAdapter(ChatRoomObject conversation) {
+        if (conversation != null) {
+            this.conversation = new ChatRoom(conversation);
+            userManager = new UserManager(this);
+            userManager.findUser(conversation.conversationalistID);
+        }
+    }
+
+    @Override
+    public void userDownloaded() {
+
+    }
+
+    @Override
+    public void userDownloaded(User downloadedUser) {
+        this.conversation.conversationalist = downloadedUser;
+        android.support.v7.app.ActionBar mActionBar = getSupportActionBar();
+        if (mActionBar != null) {
+            mActionBar.setSubtitle(Boolean.toString(downloadedUser.isOnline));
         }
     }
 }

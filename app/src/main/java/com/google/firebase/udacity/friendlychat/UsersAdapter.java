@@ -1,16 +1,19 @@
 package com.google.firebase.udacity.friendlychat;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.udacity.friendlychat.Managers.ListOfConversationsManager;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 
 import java.util.ArrayList;
@@ -47,10 +50,27 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, final int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
 
+        setTexts(holder, position);
+
+        Glide.with(context).load(R.drawable.avatar).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(holder.userAvatarImageView);
+
+        onLayoutClick(holder, position);
+    }
+
+    private void setTexts(final ViewHolder holder, final int position) {
         holder.userNameTextView.setText(finalListChatRoom.get(position).conversationalist.User_Name);
-        holder.userOnlineStatusTextView.setText(Boolean.toString(finalListChatRoom.get(position).conversationalist.isOnline));
+
+        String time = null;
+        holder.lastMessage.setText(Boolean.toString(finalListChatRoom.get(position).conversationalist.isOnline));
+        if (finalListChatRoom.get(position).chatRoomObject.lastMessageSendTime != null)
+            time = (String) finalListChatRoom.get(position).chatRoomObject.lastMessageSendTime.get("timestamp");
+
+        holder.lastMessageSendTime.setText(time);
+    }
+
+    private void onLayoutClick(final ViewHolder holder, final int position) {
 
         holder.userItemLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,8 +79,15 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
                 Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
 
                 if (finalListChatRoom.get(position).isEmpty()) {
-                    ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
+                    //ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
+
+
                 }
+                Intent intent = new Intent(context, MessageActivity.class);
+                intent.putExtra("conversationID", finalListChatRoom.get(position).chatRoomObject.conversationID);
+                intent.putExtra("displayName", finalListChatRoom.get(position).conversationalist.User_Name);
+                context.startActivity(intent);
+
             }
         });
     }
@@ -70,7 +97,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         return finalListChatRoom.size();
     }
 
-    void add(ChatRoom chatRoom) {
+    private void add(ChatRoom chatRoom) {
 
         if (chatRoom.conversationalist == null) {
             chatRoomList.add(chatRoom);
@@ -142,14 +169,16 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
         TextView userNameTextView;
         ImageView userAvatarImageView;
-        TextView userOnlineStatusTextView;
-        LinearLayout userItemLayout;
+        TextView lastMessage;
+        TextView lastMessageSendTime;
+        RelativeLayout userItemLayout;
 
         ViewHolder(View view) {
             super(view);
-            userNameTextView = view.findViewById(R.id.userName);
-            userAvatarImageView = view.findViewById(R.id.userAvatar);
-            userOnlineStatusTextView = view.findViewById(R.id.onlineStatus);
+            userNameTextView = view.findViewById(R.id.username);
+            userAvatarImageView = view.findViewById(R.id.avatar);
+            lastMessage = view.findViewById(R.id.lastMessage);
+            lastMessageSendTime = view.findViewById(R.id.time);
             userItemLayout = view.findViewById(R.id.user_item_layout);
         }
     }
