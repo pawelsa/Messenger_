@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     public static String mUsername = ANONYMOUS;
     public static FirebaseAuth firebaseAuth;
     public static FirebaseAuth.AuthStateListener authStateListener;
-
+    ItemTouchHelper itemTouchHelper;
     private ListOfConversationsManager conversationsManager;
     private UserManager userManager;
     private RecyclerView allUsersRecyclerView;
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
 
     }
-
 
 
     @Override
@@ -142,6 +142,10 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     private void createAdapterAndSetupRecyclerView() {
 
         allUsersRecyclerView = findViewById(R.id.allUsersList);
+
+        SwypeController swypeController = new SwypeController();
+        itemTouchHelper = new ItemTouchHelper(swypeController);
+        itemTouchHelper.attachToRecyclerView(allUsersRecyclerView);
         adapter = new UsersAdapter(this, this);
         allUsersRecyclerView.setAdapter(adapter);
         allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));

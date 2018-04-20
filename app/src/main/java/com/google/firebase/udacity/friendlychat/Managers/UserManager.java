@@ -75,7 +75,6 @@ public class UserManager {
         if (currentUser != null) {
             Map<String, Object> timestamp = new HashMap<>();
             timestamp.put("timestamp", ServerValue.TIMESTAMP);
-            
             Map<String, Object> updateStatus = new HashMap<>();
             updateStatus.put("isOnline", isOnline);
             updateStatus.put("timestamp", timestamp);
