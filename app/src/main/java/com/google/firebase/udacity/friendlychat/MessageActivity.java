@@ -39,7 +39,7 @@ public class MessageActivity extends AppCompatActivity implements ChatRoomListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_message);
+		setContentView(R.layout.main_activity);
 
         //Get the default actionbar instance
         android.support.v7.app.ActionBar mActionBar = getSupportActionBar();

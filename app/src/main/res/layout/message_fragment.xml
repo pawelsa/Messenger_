@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/colorAccent">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messages"
@@ -16,9 +17,11 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:background="#E5E6E4"
+        android:background="@color/colorPrimary"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp">
 
         <ImageButton
             android:id="@+id/photoPickerButton"
@@ -26,7 +29,7 @@
             android:layout_height="36dp"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
-            android:background="@android:drawable/ic_menu_gallery" />
+            android:background="@drawable/ic_insert_photo" />
 
         <EditText
             android:id="@+id/messageEditText"
@@ -43,10 +46,10 @@
         <ImageView
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="34dp"
             android:layout_gravity="center_vertical"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
             android:src="@drawable/ic_send"
             android:text="@string/send_button_label" />
 

@@ -15,23 +15,18 @@
  */
 package com.google.firebase.udacity.friendlychat;
 
+
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.udacity.friendlychat.Managers.ListOfConversationsManager;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 
 import java.util.Arrays;
@@ -39,7 +34,7 @@ import java.util.Arrays;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.changeUserOnlineStatus;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.currentUser;
 
-public class MainActivity extends AppCompatActivity implements UserManager.OnUserDownloadListener, ChatRoomListener.OnConversationListener {
+public class MainActivity extends AppCompatActivity implements UserManager.OnUserDownloadListener {
 
     public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 1;
@@ -47,19 +42,15 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     public static String mUsername = ANONYMOUS;
     public static FirebaseAuth firebaseAuth;
     public static FirebaseAuth.AuthStateListener authStateListener;
-    ItemTouchHelper itemTouchHelper;
-    private ListOfConversationsManager conversationsManager;
-    private UserManager userManager;
-    private RecyclerView allUsersRecyclerView;
-    private UsersAdapter adapter;
+	
+	private UserManager userManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-
-    }
+		setContentView(R.layout.main_activity);
+	
+	}
 
 
     @Override
@@ -71,17 +62,9 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
         if (authStateListener != null)
             firebaseAuth.removeAuthStateListener(authStateListener);
-        if (adapter != null) {
-            adapter.clear();
-            adapter = null;
-        }
         if (userManager != null) {
             userManager.clear();
             userManager = null;
-        }
-        if (conversationsManager != null) {
-            conversationsManager.clear();
-            conversationsManager = null;
         }
     }
 
@@ -114,19 +97,11 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     private void setupUserManager() {
         if (userLoggedInButNotDownloaded() || userManager == null) {
-            resume();
-            createAdapterAndSetupRecyclerView();
-        }
-    }
-
-    private void resume() {
-
-        changeUserOnlineStatus(true);
-
-        userManager = new UserManager(this);
-        conversationsManager = new ListOfConversationsManager();
-        adapter = new UsersAdapter(this, this);
-    }
+			changeUserOnlineStatus(true);
+	
+			userManager = new UserManager(this);
+		}
+	}
 
     private Intent createSignUpOrLoginScreenIntent() {
 
@@ -139,17 +114,6 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
                 .build();
     }
 
-    private void createAdapterAndSetupRecyclerView() {
-
-        allUsersRecyclerView = findViewById(R.id.allUsersList);
-
-        SwypeController swypeController = new SwypeController();
-        itemTouchHelper = new ItemTouchHelper(swypeController);
-        itemTouchHelper.attachToRecyclerView(allUsersRecyclerView);
-        adapter = new UsersAdapter(this, this);
-        allUsersRecyclerView.setAdapter(adapter);
-        allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -173,48 +137,15 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
         return firebaseAuth.getCurrentUser() != null && currentUser == null;
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch (item.getItemId()) {
-            case R.id.sign_out_menu:
-                UserManager.onSignOut();
-                AuthUI.getInstance().signOut(this);
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void addConversationToAdapter(ChatRoomObject conversation) {
-        if (adapter != null) adapter.updateList(new ChatRoom(conversation));
-    }
-
     @Override
     public void userDownloaded() {
-        Log.i("Start", "userDownloaded");
-        setupConversationListener();
-    }
-
-    private void setupConversationListener() {
-        if (conversationsManager != null) {
-            Log.i("Build", "createOnUser...");
-            conversationsManager.loadConversations(this);
-        }
-    }
+		AllConversationsFragment conversationsFragment = new AllConversationsFragment();
+	
+		FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+		fragmentTransaction.add(R.id.messageFragment, conversationsFragment, "main_fragment").commit();
+	}
 
     @Override
     public void userDownloaded(User downloadedUser) {
-        if (adapter != null) adapter.pushUser(downloadedUser);
     }
 }
