@@ -16,12 +16,18 @@
 package com.google.firebase.udacity.friendlychat;
 
 
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -57,8 +63,12 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     protected void onPause() {
         super.onPause();
 
-        Log.i("State", "OnPause");
         changeUserOnlineStatus(false);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
         if (authStateListener != null)
             firebaseAuth.removeAuthStateListener(authStateListener);
@@ -71,7 +81,34 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     @Override
     protected void onResume() {
         super.onResume();
-        authorizationSetup();
+
+        if (!isNetworkAvailable()) {
+            Log.i("Internet", "internet");
+            RelativeLayout internetStatus = findViewById(R.id.internetStatus);
+            internetStatus.setVisibility(View.VISIBLE);
+        }
+
+        if (userManager == null || authStateListener == null) {
+            authorizationSetup();
+        } else {
+            changeUserOnlineStatus(true);
+        }
+
+        openLastFragment();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private void openLastFragment() {
+
+        FragmentManager fragmentManager = getFragmentManager();
+        int count = fragmentManager.getBackStackEntryCount();
+        fragmentManager.popBackStack(count, 0);
     }
 
     private void authorizationSetup() {

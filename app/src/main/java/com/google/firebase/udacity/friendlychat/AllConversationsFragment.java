@@ -9,6 +9,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -101,6 +102,7 @@ public class AllConversationsFragment extends Fragment implements UserManager.On
 			conversationsManager.clear();
 			conversationsManager = null;
 		}
+		Log.i("State", "OnDestroy");
 	}
 	
 	@Override

@@ -5,8 +5,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,11 +24,6 @@ public class ConversationInfoFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 
 		setHasOptionsMenu(true);
-		
-		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-		if (actionBar != null) {
-			actionBar.setTitle("Huj");
-		}
 	}
 	
 	@Nullable
@@ -45,7 +39,14 @@ public class ConversationInfoFragment extends Fragment {
 		
 		menu.clear();
 	}
-	
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		Log.i("State", "OnDestroy");
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {

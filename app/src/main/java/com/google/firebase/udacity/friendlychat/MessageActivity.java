@@ -39,7 +39,7 @@ public class MessageActivity extends AppCompatActivity implements ChatRoomListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		setContentView(R.layout.main_activity);
+        setContentView(R.layout.main_activity);
 
         //Get the default actionbar instance
         android.support.v7.app.ActionBar mActionBar = getSupportActionBar();
@@ -198,9 +198,5 @@ public class MessageActivity extends AppCompatActivity implements ChatRoomListen
     @Override
     public void userDownloaded(User downloadedUser) {
         this.conversation.conversationalist = downloadedUser;
-        android.support.v7.app.ActionBar mActionBar = getSupportActionBar();
-        if (mActionBar != null) {
-            mActionBar.setSubtitle(Boolean.toString(downloadedUser.isOnline));
-        }
     }
 }
