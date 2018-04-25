@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
 public class NetworkCheckReceiver extends BroadcastReceiver {
 
@@ -12,6 +13,7 @@ public class NetworkCheckReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         boolean isInternetConnection = isOnline(context);
+        Log.i("onReceive", "internet " + Boolean.toString(isInternetConnection));
         ObserveInternet.getInstance().notifyActivity(isInternetConnection);
     }
 

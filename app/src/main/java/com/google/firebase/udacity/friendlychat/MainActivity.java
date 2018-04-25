@@ -20,6 +20,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.NetworkCheck.NetworkCheckReceiver;
 import com.google.firebase.udacity.friendlychat.NetworkCheck.ObserveInternet;
 
 import java.util.Arrays;
@@ -47,20 +49,24 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 1;
-
     public static String mUsername = ANONYMOUS;
     public static FirebaseAuth firebaseAuth;
     public static FirebaseAuth.AuthStateListener authStateListener;
-	
-	private UserManager userManager;
+    IntentFilter intentFilter;
+    private NetworkCheckReceiver networkCheckReceiver;
+    private UserManager userManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-		setContentView(R.layout.main_activity);
+        setContentView(R.layout.main_activity);
+
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        networkCheckReceiver = new NetworkCheckReceiver();
 
         ObserveInternet.getInstance().addObserver(this);
-	}
+    }
 
 
     @Override
@@ -80,32 +86,21 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
             userManager.clear();
             userManager = null;
         }
+        unregisterReceiver(networkCheckReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (!isNetworkAvailable()) {
-            Log.i("Internet", "internet");
-            RelativeLayout internetStatus = findViewById(R.id.internetStatus);
-            internetStatus.setVisibility(View.VISIBLE);
-        }
-
         if (userManager == null || authStateListener == null) {
             authorizationSetup();
         } else {
             changeUserOnlineStatus(true);
         }
+        registerReceiver(networkCheckReceiver, intentFilter);
 
         openLastFragment();
-    }
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     private void openLastFragment() {
@@ -138,11 +133,11 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     private void setupUserManager() {
         if (userLoggedInButNotDownloaded() || userManager == null) {
-			changeUserOnlineStatus(true);
-	
-			userManager = new UserManager(this);
-		}
-	}
+            changeUserOnlineStatus(true);
+
+            userManager = new UserManager(this);
+        }
+    }
 
     private Intent createSignUpOrLoginScreenIntent() {
 
@@ -180,11 +175,11 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     @Override
     public void userDownloaded() {
-		AllConversationsFragment conversationsFragment = new AllConversationsFragment();
-	
-		FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-		fragmentTransaction.add(R.id.messageFragment, conversationsFragment, "main_fragment").commit();
-	}
+        AllConversationsFragment conversationsFragment = new AllConversationsFragment();
+
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.messageFragment, conversationsFragment, "main_fragment").commit();
+    }
 
     @Override
     public void userDownloaded(User downloadedUser) {
@@ -192,6 +187,22 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     @Override
     public void update(Observable observable, Object o) {
-        //TODO: show no internet connection layout
+
+        Log.i("onReceive", "internet " + Boolean.toString((boolean) o));
+        RelativeLayout internetStatus = findViewById(R.id.internetStatus);
+        boolean isNetworkAvailable = (boolean) o;
+        if (!isNetworkAvailable) {
+            internetStatus.setVisibility(View.VISIBLE);
+        } else {
+            internetStatus.setVisibility(View.GONE);
+        }
+
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
