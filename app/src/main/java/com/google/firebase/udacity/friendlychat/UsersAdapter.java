@@ -92,7 +92,6 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
                 FragmentTransaction fragmentTransaction = ((Activity) context).getFragmentManager().beginTransaction();
                 fragmentTransaction
-                        //.setCustomAnimations(android.R.animator.fade_in,android.R.animator.fade_out)
                         .setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)
                         .replace(R.id.messageFragment, messagesFragment, "messageFragment")
                         .addToBackStack("main_fragment_replace")

@@ -2,7 +2,6 @@ package com.google.firebase.udacity.friendlychat;
 
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,10 +12,12 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -48,8 +49,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     private ChatRoom chatRoom;
 
     public static MessagesFragment newInstance() {
-        MessagesFragment newFragment = new MessagesFragment();
-        return newFragment;
+        return new MessagesFragment();
     }
 
     @Override
@@ -176,6 +176,15 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
         View v = inflater.inflate(R.layout.message_fragment, container, false);
 
+        final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
+
+        v.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gesture.onTouchEvent(event);
+            }
+        });
+
         return v;
     }
 
@@ -229,10 +238,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                FragmentManager fm = getFragmentManager();
-                if (fm.getBackStackEntryCount() > 0) {
-                    fm.popBackStack();
-                }
+                LeftToRightDetector.goBack(getActivity());
                 return true;
             case R.id.allInfo: {
                 ConversationInfoFragment conversationInfoFragment = new ConversationInfoFragment();
