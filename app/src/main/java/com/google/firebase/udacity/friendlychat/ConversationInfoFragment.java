@@ -2,14 +2,15 @@ package com.google.firebase.udacity.friendlychat;
 
 
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -30,6 +31,16 @@ public class ConversationInfoFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.conversation_info, container, false);
+
+        final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
+
+        view.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gesture.onTouchEvent(event);
+            }
+        });
+
 		return view;
 	}
 	
@@ -51,11 +62,8 @@ public class ConversationInfoFragment extends Fragment {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
-				FragmentManager fm = getFragmentManager();
-				if (fm.getBackStackEntryCount() > 0) {
-					fm.popBackStack();
-				}
-				return true;
+                LeftToRightDetector.goBack(getActivity());
+                return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}
