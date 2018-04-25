@@ -34,13 +34,16 @@ import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.NetworkCheck.ObserveInternet;
 
 import java.util.Arrays;
+import java.util.Observable;
+import java.util.Observer;
 
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.changeUserOnlineStatus;
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.currentUser;
 
-public class MainActivity extends AppCompatActivity implements UserManager.OnUserDownloadListener {
+public class MainActivity extends AppCompatActivity implements UserManager.OnUserDownloadListener, Observer {
 
     public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 1;
@@ -55,7 +58,8 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_activity);
-	
+
+        ObserveInternet.getInstance().addObserver(this);
 	}
 
 
@@ -184,5 +188,10 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
 
     @Override
     public void userDownloaded(User downloadedUser) {
+    }
+
+    @Override
+    public void update(Observable observable, Object o) {
+        //TODO: show no internet connection layout
     }
 }
