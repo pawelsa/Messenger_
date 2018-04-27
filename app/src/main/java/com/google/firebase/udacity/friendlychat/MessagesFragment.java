@@ -130,7 +130,6 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
         mMessageEditText.setScroller(new Scroller(getContext()));
         mMessageEditText.setMaxLines(2);
         mMessageEditText.setVerticalScrollBarEnabled(true);
-        //mMessageEditText.setMovementMethod(new ScrollingMovementMethod());
 
         mMessageEditText.addTextChangedListener(new TextWatcher() {
             @Override

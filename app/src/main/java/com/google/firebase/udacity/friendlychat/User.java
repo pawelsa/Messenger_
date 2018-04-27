@@ -12,6 +12,7 @@ public class User {
 
     public String User_ID;
     public String User_Name;
+    public String avatarUri;
     public boolean isOnline;
     public HashMap<String, Object> timestamp;
 
@@ -25,5 +26,6 @@ public class User {
         this.isOnline = isOnline;
         timestamp = new HashMap<>();
         timestamp.put("timestamp", ServerValue.TIMESTAMP);
+        this.avatarUri = "null";
     }
 }

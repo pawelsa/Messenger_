@@ -56,7 +56,12 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
         setTexts(holder, position);
 
-        Glide.with(context).load("http://digitalspyuk.cdnds.net/17/25/980x490/landscape-1498216547-avatar-neytiri.jpg").apply(RequestOptions.bitmapTransform(new CircleCrop())).into(holder.userAvatarImageView);
+        String contactAvatar = "http://digitalspyuk.cdnds.net/17/25/980x490/landscape-1498216547-avatar-neytiri.jpg";
+        String checkAvatar = finalListChatRoom.get(position).conversationalist.avatarUri;
+        if (checkAvatar != null && !checkAvatar.equals("null"))
+            contactAvatar = checkAvatar;
+
+        Glide.with(context).load(contactAvatar).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(holder.userAvatarImageView);
 
         onLayoutClick(holder, position);
     }

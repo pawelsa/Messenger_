@@ -18,11 +18,9 @@ package com.google.firebase.udacity.friendlychat;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -161,6 +159,9 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
                 setupUserManager();
 
             } else if (resultCode == RESULT_CANCELED) {
+                if (UserManager.currentUser != null) {
+                    setupUserManager();
+                }
                 Toast.makeText(getApplicationContext(), "Could't login", Toast.LENGTH_SHORT).show();
                 finish();
             }
@@ -197,12 +198,5 @@ public class MainActivity extends AppCompatActivity implements UserManager.OnUse
             internetStatus.setVisibility(View.GONE);
         }
 
-    }
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

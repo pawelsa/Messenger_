@@ -3,6 +3,7 @@ package com.google.firebase.udacity.friendlychat;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.graphics.Point;
+import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -54,6 +55,7 @@ public class LeftToRightDetector {
 
     public static void goBack(Activity activity) {
         FragmentManager fm = activity.getFragmentManager();
+        Log.i("Fragment quantity", Integer.toString(fm.getBackStackEntryCount()));
         if (fm.getBackStackEntryCount() > 0) {
             fm.popBackStack();
         }
