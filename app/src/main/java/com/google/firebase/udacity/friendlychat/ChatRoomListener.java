@@ -7,18 +7,16 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
 
-/**
- * Created by Paweł on 11.04.2018.
- */
 
 public class ChatRoomListener {
 	
 	private static OnConversationListener mOnConversationListener;
 	private ValueEventListener chatRoomListener;
 	private DatabaseReference referenceToChatRooms;
-	
-	ChatRoomListener(String conversationID, OnConversationListener onConversationListener) {
+
+	public ChatRoomListener(String conversationID, OnConversationListener onConversationListener) {
 		
 		mOnConversationListener = onConversationListener;
 		chatRoomListener = createChatRoomListener();
@@ -46,8 +44,8 @@ public class ChatRoomListener {
 			}
 		};
 	}
-	
-	void destroy() {
+
+	public void destroy() {
 		mOnConversationListener = null;
 		referenceToChatRooms.removeEventListener(chatRoomListener);
 		chatRoomListener = null;

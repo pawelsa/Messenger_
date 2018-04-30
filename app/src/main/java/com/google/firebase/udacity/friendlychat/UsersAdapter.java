@@ -1,9 +1,9 @@
 package com.google.firebase.udacity.friendlychat;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,14 +16,14 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
+import com.google.firebase.udacity.friendlychat.Objects.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Paweł on 26.03.2018.
- */
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
 
@@ -32,7 +32,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     private List<ChatRoom> chatRoomList;
     private List<ChatRoom> finalListChatRoom;
 
-    UsersAdapter(Context context, UserManager.OnUserDownloadListener onUserDownloadListener) {
+    public UsersAdapter(Context context, UserManager.OnUserDownloadListener onUserDownloadListener) {
         this.context = context;
         this.chatRoomList = new ArrayList<>();
         this.finalListChatRoom = new ArrayList<>();
@@ -86,16 +86,16 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
                 Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
 
-                if (finalListChatRoom.get(position).isEmpty()) {
-                    //ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
-                }
-                MessagesFragment messagesFragment = MessagesFragment.newInstance();
+                /*if (finalListChatRoom.get(position).isEmpty()) {
+                    ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
+                }*/
+                MessagesFragment messagesFragment = MessagesFragment.getInstance();
                 Bundle bundle = new Bundle();
                 bundle.putString("conversationID", finalListChatRoom.get(position).chatRoomObject.conversationID);
                 bundle.putString("displayName", finalListChatRoom.get(position).conversationalist.User_Name);
                 messagesFragment.setArguments(bundle);
 
-                FragmentTransaction fragmentTransaction = ((Activity) context).getFragmentManager().beginTransaction();
+                FragmentTransaction fragmentTransaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
                 fragmentTransaction
                         .setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)
                         .replace(R.id.messageFragment, messagesFragment, "messageFragment")
@@ -137,7 +137,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         if (conversationalistID != null) userManager.findUser(conversationalistID);
     }
 
-    void updateList(ChatRoom chatRoom) {
+    public void updateList(ChatRoom chatRoom) {
 
         for (int i = 0; i < chatRoomList.size(); i++) {
             if (chatRoomEquals(i, chatRoom)) {
@@ -154,7 +154,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     //TODO: Maybe there is better way to check it
-    void pushUser(User pushedUser) {
+    public void pushUser(User pushedUser) {
 
         for (ChatRoom chatRoom : chatRoomList) {
             if (chatRoom.chatRoomObject.conversationalistID.equals(pushedUser.User_ID) || chatRoom.chatRoomObject.myID.equals(pushedUser.User_ID)) {
@@ -174,7 +174,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         }
     }
 
-    void clear() {
+    public void clear() {
         finalListChatRoom.clear();
         chatRoomList.clear();
         notifyDataSetChanged();

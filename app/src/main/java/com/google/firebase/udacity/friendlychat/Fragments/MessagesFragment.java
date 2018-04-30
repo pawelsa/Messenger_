@@ -1,11 +1,11 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.Fragments;
 
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -25,21 +25,23 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Scroller;
 
+import com.google.firebase.udacity.friendlychat.ChatRoomListener;
+import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
+import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
+import com.google.firebase.udacity.friendlychat.Objects.User;
+import com.google.firebase.udacity.friendlychat.R;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.firebase.udacity.friendlychat.MainActivity.mUsername;
-
-/**
- * Created by Paweł on 17.04.2018.
- */
 
 public class MessagesFragment extends Fragment implements ChatRoomListener.OnConversationListener, com.google.firebase.udacity.friendlychat.Managers.UserManager.OnUserDownloadListener {
 
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
     private static final int RC_PHOTO_PICKER = 2;
+    private static final MessagesFragment ourInstance = new MessagesFragment();
     UserManager userManager;
     private ImageButton mPhotoPickerButton;
     private EditText mMessageEditText;
@@ -48,9 +50,10 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     private ChatRoomListener chatRoomListener;
     private ChatRoom chatRoom;
 
-    public static MessagesFragment newInstance() {
-        return new MessagesFragment();
+    public static MessagesFragment getInstance() {
+        return ourInstance;
     }
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,7 +68,6 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
         setHasOptionsMenu(true);
         View item = getActivity().findViewById(R.id.allInfo);
         if (item != null) item.setVisibility(View.INVISIBLE);
-
         getConversationIdAndSetupActionBar();
 
         initializeReferencesToViews();
@@ -90,6 +92,8 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
         actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setDisplayUseLogoEnabled(true);
             actionBar.setTitle(userName);
         }
     }
@@ -157,7 +161,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+/*
                 FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
 
                 if (newMessage.getText().trim().length() > 0) {
@@ -165,7 +169,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
                     // mDatabaseReference.push().setValue(newMessage);
                     // Clear input box
                     mMessageEditText.setText("");
-                }
+                }*/
             }
         });
     }
@@ -242,8 +246,12 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
             case R.id.allInfo: {
                 ConversationInfoFragment conversationInfoFragment = new ConversationInfoFragment();
 
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-                fragmentTransaction.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right).replace(R.id.messageFragment, conversationInfoFragment, "infoFragment").addToBackStack(null).commit();
+                FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
+                fragmentTransaction
+                        //R.anim.enter_from_right, R.anim.none, R.anim.none, R.anim.exit_to_right
+                        .setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)
+                        .replace(R.id.messageFragment, conversationInfoFragment, "infoFragment")
+                        .addToBackStack(null).commit();
             }
             default:
                 return super.onOptionsItemSelected(item);
@@ -267,8 +275,10 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     public void userDownloaded(User downloadedUser) {
         chatRoom.conversationalist = downloadedUser;
 
-        if (actionBar != null)
+        if (actionBar != null) {
+            setUserAvatarInActionBar();
             setUserOnlineStatusInActionBar(downloadedUser);
+        }
     }
 
     void setUserOnlineStatusInActionBar(User user) {
@@ -279,6 +289,21 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
             onlineStatusMessage = getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(user));
         }
         actionBar.setSubtitle(onlineStatusMessage);
+    }
+
+    private void setUserAvatarInActionBar() {
+
+/*        Glide.with(getContext()).load(chatRoom.conversationalist.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(new SimpleTarget<Drawable>() {
+            @Override
+            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+
+                Bitmap bitmap1 = ((BitmapDrawable) resource).getBitmap();
+
+                Drawable drawable = new BitmapDrawable(getResources(), bitmap1);
+                actionBar.setIcon(drawable);
+            }
+        });*/
+//actionBar.setIcon(R.drawable.avatar);
     }
 
     long getLastOnlineTimestamp(User user) {
@@ -299,6 +324,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
                 lastTimeOnline = TimeUnit.MILLISECONDS.toMinutes(diff);
                 if (lastTimeOnline <= 0) {
                     onlineStatusMessage = "A moment ago";
+                    return onlineStatusMessage;
                 } else
                     onlineStatusMessage += lastTimeOnline + " minute";
             } else

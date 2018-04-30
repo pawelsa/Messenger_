@@ -1,14 +1,12 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.Fragments;
 
-
-import android.app.Fragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,24 +21,28 @@ import android.widget.RelativeLayout;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
-import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.Managers.UserOnlineStatus;
+import com.google.firebase.udacity.friendlychat.R;
 
 import static android.app.Activity.RESULT_OK;
 
 public class UserSettingsFragment extends Fragment {
 
+    private static final UserSettingsFragment ourInstance = new UserSettingsFragment();
     private final int AVATAR_RG = 1;
-
-
     RelativeLayout signoutSetting;
     ImageView userAvatar;
-
     public UserSettingsFragment() {
+    }
+
+    public static UserSettingsFragment getInstance() {
+        return ourInstance;
     }
 
     @Override
@@ -49,7 +51,6 @@ public class UserSettingsFragment extends Fragment {
 
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
         if (actionBar != null) {
-            Log.i("actionBar", "actionBar");
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
@@ -82,9 +83,11 @@ public class UserSettingsFragment extends Fragment {
     }
 
     private void setAvatarPhoto(View view) {
-        String avatarPhoto = UserManager.currentUser.avatarUri;
-        if (avatarPhoto != null && !avatarPhoto.equals("null")) {
-            Glide.with(view).load(UserManager.currentUser.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(userAvatar);
+        if (UserManager.currentUser != null) {
+            String avatarPhoto = UserManager.currentUser.avatarUri;
+            if (avatarPhoto != null && !avatarPhoto.equals("null")) {
+                Glide.with(view).load(UserManager.currentUser.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(userAvatar);
+            }
         }
     }
 
@@ -97,8 +100,8 @@ public class UserSettingsFragment extends Fragment {
         signoutSetting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                UserManager.onSignOut();
-                AuthUI.getInstance().signOut(getActivity());
+                UserOnlineStatus userOnlineStatus = UserOnlineStatus.getInstance();
+                userOnlineStatus.logOut();
             }
         });
 

@@ -3,6 +3,7 @@ package com.google.firebase.udacity.friendlychat.Managers;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -11,15 +12,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.udacity.friendlychat.MainActivity;
-import com.google.firebase.udacity.friendlychat.User;
+import com.google.firebase.udacity.friendlychat.Objects.User;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by Paweł on 29.03.2018.
- */
 
 public class UserManager {
 
@@ -35,7 +32,15 @@ public class UserManager {
     public UserManager(OnUserDownloadListener onUserDownloadListener) {
 
         setOnUserDownloadListener(onUserDownloadListener);
-        currentUserID = getUserIDFromFirebaseAuth();
+
+        if (currentUser != null) {
+            Log.i("setupUserManager", "constructior");
+            currentUserID = currentUser.User_ID;
+            mOnUserDownloadListener.userDownloaded();
+            return;
+        } else {
+            currentUserID = getUserIDFromFirebaseAuth();
+        }
         getCurrentUserFromServer();
     }
 
@@ -46,7 +51,7 @@ public class UserManager {
 
     private static FirebaseUser getUserFromFireBaseAuth() {
 
-        return MainActivity.firebaseAuth.getCurrentUser();
+        return FirebaseAuth.getInstance().getCurrentUser();
     }
 
     public static String getCurrentUserID() {
@@ -56,7 +61,7 @@ public class UserManager {
 
     private static void createNewUserAndPush() {
 
-        if (MainActivity.firebaseAuth.getCurrentUser() != null) {
+        if (UserOnlineStatus.firebaseAuth.getCurrentUser() != null) {
             String userID = getUserIDFromFirebaseAuth();
             String displayName = getUserFromFireBaseAuth().getDisplayName();
 
@@ -67,14 +72,14 @@ public class UserManager {
         }
     }
 
-    public static void onSignOut() {
+    static void onSignOut() {
 
         changeUserOnlineStatus(false);
         currentUser = null;
         currentUserID = null;
     }
 
-    public static void changeUserOnlineStatus(boolean isOnline) {
+    static void changeUserOnlineStatus(boolean isOnline) {
 
         if (currentUser != null) {
             Map<String, Object> timestamp = new HashMap<>();
@@ -97,12 +102,11 @@ public class UserManager {
     }
 
     private void getCurrentUserFromServer() {
-
-        if (currentUser == null) {
-            if (currentUserID == null)
-                currentUserID = getUserIDFromFirebaseAuth();
+        if (currentUser != null) {
+            mOnUserDownloadListener.userDownloaded();
+        } else if (currentUserID != null && mOnUserDownloadListener != null) {
             findUser(currentUserID);
-        } else if (mOnUserDownloadListener != null) mOnUserDownloadListener.userDownloaded();
+        }
     }
 
     public void findUser(final String mUserID) {
@@ -148,17 +152,19 @@ public class UserManager {
 
         User downloadedUser = userData.getValue(User.class);
 
-        if (mUserID.equals(currentUserID) && currentUser == null) {
-            Log.i("UserData", "Exist current");
-            currentUser = downloadedUser;
-            mOnUserDownloadListener.userDownloaded();
-        } else {
-            Log.i("UserData", "Exist");
-            mOnUserDownloadListener.userDownloaded(downloadedUser);
+        if (downloadedUser != null) {
+            if (mUserID.equals(currentUserID) && currentUser == null) {
+                Log.i("UserData", "Exist current");
+                currentUser = downloadedUser;
+                mOnUserDownloadListener.userDownloaded();
+            } else {
+                Log.i("UserData", "Exist");
+                mOnUserDownloadListener.userDownloaded(downloadedUser);
+            }
         }
     }
 
-    public void clear() {
+    void clear() {
         mOnUserDownloadListener = null;
     }
 
@@ -170,7 +176,6 @@ public class UserManager {
 
         reference.limitToFirst(10).addChildEventListener(childEventListener);
     }
-
 
     private ChildEventListener allUsersListener() {
 
@@ -204,7 +209,7 @@ public class UserManager {
         };
     }
 
-    public void setOnUserDownloadListener(OnUserDownloadListener OnUserDownloadListener) {
+    private void setOnUserDownloadListener(OnUserDownloadListener OnUserDownloadListener) {
         mOnUserDownloadListener = OnUserDownloadListener;
     }
 

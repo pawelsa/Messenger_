@@ -1,12 +1,9 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.Objects;
 
 import android.graphics.Color;
 
 import java.util.HashMap;
 
-/**
- * Created by Paweł on 31.03.2018.
- */
 
 public class ChatRoomObject {
 

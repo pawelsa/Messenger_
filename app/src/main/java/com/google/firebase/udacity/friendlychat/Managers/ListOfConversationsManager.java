@@ -8,14 +8,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.udacity.friendlychat.ChatRoomListener;
-import com.google.firebase.udacity.friendlychat.ChatRoomObject;
 import com.google.firebase.udacity.friendlychat.ConversationListener;
+import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
 
 import static com.google.firebase.udacity.friendlychat.Managers.UserManager.currentUser;
 
-/**
- * Created by Paweł on 30.03.2018.
- */
 
 public class ListOfConversationsManager {
 	

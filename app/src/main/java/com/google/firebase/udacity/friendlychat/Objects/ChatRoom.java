@@ -1,8 +1,6 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.Objects;
 
-/**
- * Created by Paweł on 27.03.2018.
- */
+
 
 public class ChatRoom {
 
@@ -29,7 +27,7 @@ public class ChatRoom {
     }
 
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
 
         return chatRoomObject == null;
     }

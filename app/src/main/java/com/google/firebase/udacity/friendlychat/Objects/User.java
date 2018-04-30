@@ -1,12 +1,8 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.Objects;
 
 import com.google.firebase.database.ServerValue;
 
 import java.util.HashMap;
-
-/**
- * Created by Paweł on 25.03.2018.
- */
 
 public class User {
 

@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="#abc8e2"
     android:orientation="vertical"
-    tools:context="com.google.firebase.udacity.friendlychat.UserSettingsFragment">
+    tools:context="com.google.firebase.udacity.friendlychat.Fragments.UserSettingsFragment">
 
 
     <ImageView
