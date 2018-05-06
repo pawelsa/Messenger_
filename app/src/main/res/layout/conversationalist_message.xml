@@ -12,6 +12,9 @@
         android:layout_marginLeft="8dp"
         android:background="@color/colorAccent"
         android:maxWidth="80dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@string/avatar_picture"
         android:src="@drawable/ic_person" />
 
     <TextView
@@ -21,7 +24,6 @@
         android:layout_above="@+id/text_message_body"
         android:layout_alignLeft="@+id/text_message_body"
         android:layout_alignStart="@+id/text_message_body"
-        android:text="John Doe"
         android:textSize="12sp" />
 
     <TextView
@@ -35,7 +37,7 @@
         android:background="@drawable/message_rectangle"
         android:maxWidth="240dp"
         android:padding="8dp"
-        android:text="hi man, how are you?"
+        android:layout_marginStart="10dp"
         android:textColor="#ffffff" />
 
     <TextView
@@ -45,7 +47,6 @@
         android:layout_alignEnd="@+id/text_message_body"
         android:layout_alignRight="@+id/text_message_body"
         android:layout_alignTop="@+id/text_message_name"
-        android:text="11:40"
         android:textSize="10sp" />
 
 </RelativeLayout>

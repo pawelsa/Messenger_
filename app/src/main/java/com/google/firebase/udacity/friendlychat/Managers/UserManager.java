@@ -17,9 +17,15 @@ import com.google.firebase.udacity.friendlychat.Objects.User;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.firebase.udacity.friendlychat.Managers.ListOfConversationsManager.CHAT_ROOM;
+
 
 public class UserManager {
 
+    private static final String USERS = "users";
+    private static final String TIMESTAMP = "timestamp";
+    private static final String IS_ONLINE = "isOnline";
+    private static final String AVATAR_URI = "avatarUri";
 
     public static User currentUser;
     private static String currentUserID;
@@ -67,7 +73,7 @@ public class UserManager {
 
             currentUser = new User(userID, displayName, true);
 
-            DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child("users/" + userID);
+            DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child(USERS).child(userID);
             userReference.setValue(currentUser);
         }
     }
@@ -83,12 +89,12 @@ public class UserManager {
 
         if (currentUser != null) {
             Map<String, Object> timestamp = new HashMap<>();
-            timestamp.put("timestamp", ServerValue.TIMESTAMP);
+            timestamp.put(TIMESTAMP, ServerValue.TIMESTAMP);
             Map<String, Object> updateStatus = new HashMap<>();
-            updateStatus.put("isOnline", isOnline);
-            updateStatus.put("timestamp", timestamp);
+            updateStatus.put(IS_ONLINE, isOnline);
+            updateStatus.put(TIMESTAMP, timestamp);
 
-            DatabaseReference referenceToUpdateUserStatus = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserID);
+            DatabaseReference referenceToUpdateUserStatus = FirebaseDatabase.getInstance().getReference().child(USERS).child(currentUserID);
             referenceToUpdateUserStatus.updateChildren(updateStatus);
         }
     }
@@ -96,9 +102,37 @@ public class UserManager {
     public static void setCurrentUserAvatarUri(Uri photoUri) {
         Map<String, Object> photoUpdate = new HashMap<>();
         currentUser.avatarUri = photoUri.toString();
-        photoUpdate.put("avatarUri", photoUri.toString());
-        DatabaseReference referenceToUserAvatarUri = FirebaseDatabase.getInstance().getReference().child("users").child(currentUserID);
+        photoUpdate.put(AVATAR_URI, photoUri.toString());
+        DatabaseReference referenceToUserAvatarUri = FirebaseDatabase.getInstance().getReference().child(USERS).child(currentUserID);
         referenceToUserAvatarUri.updateChildren(photoUpdate);
+    }
+
+    public static void updateUserPseudonym(final String newPseudonym, final String conversationID) {
+
+        if (!newPseudonym.equals("")) {
+            DatabaseReference pseudonymReference = FirebaseDatabase.getInstance().getReference().child(CHAT_ROOM).child(conversationID).child("conversationalistID");
+            ValueEventListener check = new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    String ID = (String) dataSnapshot.getValue();
+
+                    DatabaseReference pseudonymReference = FirebaseDatabase.getInstance().getReference().child(CHAT_ROOM).child(conversationID);
+                    Map<String, Object> pseudonym = new HashMap<>();
+                    if (ID.equals(/*users.get(position).User_ID)*/ currentUserID)) {
+                        pseudonym.put("myPseudonym", newPseudonym);
+                    } else {
+                        pseudonym.put("conversationalistPseudonym", newPseudonym);
+                    }
+                    pseudonymReference.updateChildren(pseudonym);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            };
+            pseudonymReference.addListenerForSingleValueEvent(check);
+        }
     }
 
     private void getCurrentUserFromServer() {
@@ -114,7 +148,7 @@ public class UserManager {
         ValueEventListener userChangeListener = createUserChangeListener(mUserID);
 
         DatabaseReference userReference;
-        userReference = FirebaseDatabase.getInstance().getReference().child("users").child(mUserID);
+        userReference = FirebaseDatabase.getInstance().getReference().child(USERS).child(mUserID);
         if (!mUserID.equals(currentUserID))
             userReference.addValueEventListener(userChangeListener);
         else

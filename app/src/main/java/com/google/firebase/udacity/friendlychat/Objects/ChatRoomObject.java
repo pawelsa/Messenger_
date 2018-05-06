@@ -1,7 +1,5 @@
 package com.google.firebase.udacity.friendlychat.Objects;
 
-import android.graphics.Color;
-
 import java.util.HashMap;
 
 
@@ -9,7 +7,9 @@ public class ChatRoomObject {
 
     public String conversationID;
     public String myID;
+    public String myPseudonym;
     public String conversationalistID;
+    public String conversationalistPseudonym;
     public int chatColor;
     public String lastMessage;
 	public HashMap<String, Object> lastMessageSendTime;
@@ -21,6 +21,7 @@ public class ChatRoomObject {
         this.myID = myID;
         this.conversationalistID = conversationalistID;
         this.conversationID = conversationID;
-        chatColor = Color.BLUE;
+        String hex = "42E1F4";
+        chatColor = Integer.parseInt(hex, 16);
     }
 }

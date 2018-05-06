@@ -2,6 +2,9 @@ package com.google.firebase.udacity.friendlychat.Fragments;
 
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -41,7 +44,14 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
     public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
     private static final int RC_PHOTO_PICKER = 2;
-    private static final MessagesFragment ourInstance = new MessagesFragment();
+    public static final String CONVERSATION_ID = "conversationID";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String CONVERSATIONALIST_ID = "conversationalist_id";
+    public static final String CONVERSATIONALIST_DISPLAY_NAME = "conversationalist_display_name";
+    public static final String CONVERSATIONALIST_AVATAR_URL = "conversationalist_avatar_url";
+    public static final String MY_PSEUDONYM = "my_pseudonym";
+    public static final String CONVERSATIONALIST_PSEUDONYM = "conversationalist_pseudonym";
+    public static final MessagesFragment ourInstance = new MessagesFragment();
     UserManager userManager;
     private ImageButton mPhotoPickerButton;
     private EditText mMessageEditText;
@@ -49,6 +59,10 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     private ActionBar actionBar;
     private ChatRoomListener chatRoomListener;
     private ChatRoom chatRoom;
+    String conversationID;
+    String myPseudonym;
+    String conversationalistPseudonym;
+    private boolean onPause = false;
 
     public static MessagesFragment getInstance() {
         return ourInstance;
@@ -78,8 +92,8 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
         Bundle bundle = getArguments();
         if (bundle != null) {
-            String conversationID = bundle.getString("conversationID");
-            String userName = bundle.getString("displayName");
+            conversationID = bundle.getString(CONVERSATION_ID);
+            String userName = bundle.getString(DISPLAY_NAME);
 
             setupActionBar(userName);
 
@@ -89,8 +103,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
     private void setupActionBar(String userName) {
 
-        actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null) {
+        if (actionBar != null && !onPause) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
             actionBar.setDisplayUseLogoEnabled(true);
@@ -170,6 +183,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
                     // Clear input box
                     mMessageEditText.setText("");
                 }*/
+
             }
         });
     }
@@ -188,12 +202,25 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
             }
         });
 
+        actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        onPause = false;
+        if (conversationalistPseudonym != null)
+            setupActionBar(conversationalistPseudonym);
+        if (chatRoom != null && chatRoom.conversationalist != null)
+            setUserOnlineStatusInActionBar();
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        onPause = true;
         Log.i("State", "OnPause");
     }
 
@@ -246,9 +273,14 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
             case R.id.allInfo: {
                 ConversationInfoFragment conversationInfoFragment = new ConversationInfoFragment();
 
+                Bundle bundle = chatRoom.conversationalist.getSettingsBundle();
+                bundle.putString(CONVERSATION_ID, conversationID);
+                bundle.putString(MY_PSEUDONYM, myPseudonym);
+                bundle.putString(CONVERSATIONALIST_PSEUDONYM, conversationalistPseudonym);
+                conversationInfoFragment.setArguments(bundle);
+
                 FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
                 fragmentTransaction
-                        //R.anim.enter_from_right, R.anim.none, R.anim.none, R.anim.exit_to_right
                         .setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)
                         .replace(R.id.messageFragment, conversationInfoFragment, "infoFragment")
                         .addToBackStack(null).commit();
@@ -264,6 +296,34 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
         chatRoom = new ChatRoom(conversation);
         String conversationalistID = (conversation.conversationalistID.equals(UserManager.getCurrentUserID()) ? conversation.myID : conversation.conversationalistID);
         userManager.findUser(conversationalistID);
+
+        changeBarColors(conversation.chatColor);
+    }
+
+    private void changeBarColors(int color) {
+        if (actionBar != null) {
+            changeActionBarColor(color);
+            changeStatusBarColor(color);
+        }
+    }
+
+    private void changeActionBarColor(int color) {
+        String hex = Integer.toHexString(color);
+        while (hex.length() < 6) {
+            hex = "0" + hex;
+        }
+        actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#" + hex)));
+    }
+
+    private void changeStatusBarColor(int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            float[] hsv = new float[3];
+            Color.colorToHSV(color, hsv);
+            hsv[2] *= 0.8f; // value component
+            color = Color.HSVToColor(hsv);
+
+            getActivity().getWindow().setStatusBarColor(color);
+        }
     }
 
     @Override
@@ -275,20 +335,43 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
     public void userDownloaded(User downloadedUser) {
         chatRoom.conversationalist = downloadedUser;
 
+        if (downloadedUser.User_ID.equals(chatRoom.chatRoomObject.conversationalistID)) {
+            Log.i("Tukej", "Ja");
+            if (chatRoom.chatRoomObject.myPseudonym != null)
+                myPseudonym = chatRoom.chatRoomObject.myPseudonym;
+            else
+                myPseudonym = UserManager.currentUser.User_Name;
+            if (chatRoom.chatRoomObject.conversationalistPseudonym != null)
+                conversationalistPseudonym = chatRoom.chatRoomObject.conversationalistPseudonym;
+            else
+                conversationalistPseudonym = chatRoom.conversationalist.User_Name;
+        } else {
+            if (chatRoom.chatRoomObject.conversationalistPseudonym != null)
+                myPseudonym = chatRoom.chatRoomObject.conversationalistPseudonym;
+            else
+                myPseudonym = chatRoom.conversationalist.User_Name;
+            if (chatRoom.chatRoomObject.myPseudonym != null)
+                conversationalistPseudonym = chatRoom.chatRoomObject.myPseudonym;
+            else
+                conversationalistPseudonym = UserManager.currentUser.User_Name;
+        }
+        if (conversationalistPseudonym != null)
+            setupActionBar(conversationalistPseudonym);
         if (actionBar != null) {
             setUserAvatarInActionBar();
-            setUserOnlineStatusInActionBar(downloadedUser);
+            setUserOnlineStatusInActionBar();
         }
     }
 
-    void setUserOnlineStatusInActionBar(User user) {
+    void setUserOnlineStatusInActionBar() {
+        if (!onPause) {
+            String onlineStatusMessage = getResources().getString(R.string.now_online);
 
-        String onlineStatusMessage = "Now online";
-
-        if (!user.isOnline) {
-            onlineStatusMessage = getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(user));
+            if (!chatRoom.conversationalist.isOnline) {
+                onlineStatusMessage = getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist));
+            }
+            actionBar.setSubtitle(onlineStatusMessage);
         }
-        actionBar.setSubtitle(onlineStatusMessage);
     }
 
     private void setUserAvatarInActionBar() {
@@ -315,7 +398,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
         long diff = returnTimeSinceLastOnlineTime(lastSeen);
 
-        String onlineStatusMessage = "Last seen ";
+        String onlineStatusMessage = getResources().getString(R.string.last_seen);
 
         long lastTimeOnline = TimeUnit.MILLISECONDS.toDays(diff);
         if (lastTimeOnline <= 0) {
@@ -323,16 +406,16 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
             if (lastTimeOnline <= 0) {
                 lastTimeOnline = TimeUnit.MILLISECONDS.toMinutes(diff);
                 if (lastTimeOnline <= 0) {
-                    onlineStatusMessage = "A moment ago";
+                    onlineStatusMessage = getResources().getString(R.string.moment_ago);
                     return onlineStatusMessage;
                 } else
-                    onlineStatusMessage += lastTimeOnline + " minute";
+                    onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.minute);
             } else
-                onlineStatusMessage += lastTimeOnline + " hour";
+                onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.hour);
         } else
-            onlineStatusMessage += lastTimeOnline + " day";
+            onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.day);
 
-        onlineStatusMessage += (lastTimeOnline == 1 ? "" : "s") + " ago";
+        onlineStatusMessage += (lastTimeOnline == 1 ? "" : getResources().getString(R.string.plural)) + getResources().getString(R.string.ago);
 
         return onlineStatusMessage;
     }

@@ -1,6 +1,9 @@
 package com.google.firebase.udacity.friendlychat.Fragments;
 
 
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -88,6 +91,20 @@ public class AllConversationsFragment extends Fragment implements UserManager.On
             actionBar.setTitle(R.string.app_name);
             actionBar.setSubtitle("");
             actionBar.setIcon(null);
+            actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
+            changeStatusBarColor();
+        }
+    }
+
+    private void changeStatusBarColor() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int color = getResources().getColor(R.color.colorPrimaryDark);
+            float[] hsv = new float[3];
+            Color.colorToHSV(color, hsv);
+            hsv[2] *= 0.8f; // value component
+            color = Color.HSVToColor(hsv);
+
+            getActivity().getWindow().setStatusBarColor(color);
         }
     }
 

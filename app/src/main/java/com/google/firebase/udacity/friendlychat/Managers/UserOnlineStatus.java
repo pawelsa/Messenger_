@@ -9,6 +9,7 @@ import com.firebase.ui.auth.AuthUI;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.udacity.friendlychat.Objects.User;
+import com.google.firebase.udacity.friendlychat.R;
 
 import java.util.Arrays;
 
@@ -85,7 +86,7 @@ public class UserOnlineStatus implements UserManager.OnUserDownloadListener {
                 if (UserManager.currentUser != null && userOnlineStatusListener != null) {
                     authorizationSetup();
                 }
-                Toast.makeText(mainActivity.getApplicationContext(), "Could't login", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mainActivity.getApplicationContext(), mainActivity.getResources().getString(R.string.couldnt_login), Toast.LENGTH_SHORT).show();
                 mainActivity.finish();
             }
         }

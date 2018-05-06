@@ -52,6 +52,20 @@ public class ChatRoomListener {
 		referenceToChatRooms = null;
 		Log.i("Destroy", "ChatRoomListener");
 	}
+
+	public void onPause() {
+		Log.i("onPause", "ChatRoomListener");
+		referenceToChatRooms.removeEventListener(chatRoomListener);
+		chatRoomListener = null;
+	}
+
+	public void onResume() {
+		Log.i("onResume", "ChatRoomListener");
+		if (referenceToChatRooms != null)
+			if (chatRoomListener == null)
+				chatRoomListener = createChatRoomListener();
+		referenceToChatRooms.addValueEventListener(chatRoomListener);
+	}
 	
 	public interface OnConversationListener {
 		

@@ -14,6 +14,7 @@
         android:layout_marginBottom="50dp"
         android:layout_marginTop="20dp"
         android:minHeight="200dp"
+        android:contentDescription="@string/avatar_picture"
         android:src="@drawable/ic_person" />
 
     <RelativeLayout
@@ -38,20 +39,21 @@
             android:layout_alignTop="@+id/notification_settings_icon"
             android:layout_toRightOf="@+id/notification_settings_icon"
             android:gravity="center_vertical"
+            android:layout_toEndOf="@+id/notification_settings_icon"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/notification_settings_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notifications and sounds"
+                android:text="@string/settings_notifications"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Do you want to receive notifications ?"
+                android:text="@string/setting_notifications_description"
                 android:textSize="10sp" />
         </LinearLayout>
 
@@ -68,6 +70,7 @@
         android:background="#abc8e2"
         android:clickable="true"
         android:elevation="2dp"
+        android:focusable="true"
         android:padding="10dp">
 
         <TextView
@@ -78,7 +81,7 @@
             android:layout_alignParentTop="true"
             android:layout_marginLeft="34dp"
             android:layout_marginStart="34dp"
-            android:text="Log out"
+            android:text="@string/log_out"
             android:textSize="15sp"
             android:textStyle="bold" />
     </RelativeLayout>

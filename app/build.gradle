@@ -29,6 +29,10 @@ android {
         exclude 'META-INF/LICENSE-FIREBASE.txt'
         exclude 'META-INF/NOTICE'
     }
+    lintOptions {
+        disable 'RestrictedApi'
+    }
+
 }
 
 dependencies {
@@ -43,7 +47,7 @@ dependencies {
     compile 'com.google.firebase:firebase-messaging:11.8.0'
 
     //noinspection GradleCompatible
-    compile 'com.android.support:design:24.2.1'
+    compile 'com.android.support:design:26.1.0'
     compile 'com.android.support:appcompat-v7:26.1.0'
 
     // Displaying images

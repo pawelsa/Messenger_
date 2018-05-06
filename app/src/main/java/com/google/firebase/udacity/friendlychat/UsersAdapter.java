@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
@@ -23,6 +22,9 @@ import com.google.firebase.udacity.friendlychat.Objects.User;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATION_ID;
+import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.DISPLAY_NAME;
 
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
@@ -67,7 +69,8 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     }
 
     private void setTexts(final ViewHolder holder, final int position) {
-        holder.userNameTextView.setText(finalListChatRoom.get(position).conversationalist.User_Name);
+
+        holder.userNameTextView.setText(getUsername(position));
 
         String time = null;
         holder.lastMessage.setText(Boolean.toString(finalListChatRoom.get(position).conversationalist.isOnline));
@@ -78,21 +81,31 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         holder.lastMessageSendTime.setText(time);
     }
 
+    private String getUsername(int position) {
+        String username = finalListChatRoom.get(position).conversationalist.User_Name;
+
+        if (finalListChatRoom.get(position).conversationalist.User_ID.equals(finalListChatRoom.get(position).chatRoomObject.conversationalistID)
+                && finalListChatRoom.get(position).chatRoomObject.conversationalistPseudonym != null) {
+            username = finalListChatRoom.get(position).chatRoomObject.conversationalistPseudonym;
+        } else if (finalListChatRoom.get(position).chatRoomObject.myPseudonym != null) {
+            username = finalListChatRoom.get(position).chatRoomObject.myPseudonym;
+        }
+        return username;
+    }
+
     private void onLayoutClick(final ViewHolder holder, final int position) {
 
         holder.userItemLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                Toast.makeText(context, "Clicked", Toast.LENGTH_SHORT).show();
-
                 /*if (finalListChatRoom.get(position).isEmpty()) {
                     ListOfConversationsManager.openChatRoomWith(finalListChatRoom.get(position).conversationalist.User_ID);
                 }*/
                 MessagesFragment messagesFragment = MessagesFragment.getInstance();
                 Bundle bundle = new Bundle();
-                bundle.putString("conversationID", finalListChatRoom.get(position).chatRoomObject.conversationID);
-                bundle.putString("displayName", finalListChatRoom.get(position).conversationalist.User_Name);
+                bundle.putString(CONVERSATION_ID, finalListChatRoom.get(position).chatRoomObject.conversationID);
+                bundle.putString(DISPLAY_NAME, finalListChatRoom.get(position).conversationalist.User_Name);
                 messagesFragment.setArguments(bundle);
 
                 FragmentTransaction fragmentTransaction = ((AppCompatActivity) context).getSupportFragmentManager().beginTransaction();
