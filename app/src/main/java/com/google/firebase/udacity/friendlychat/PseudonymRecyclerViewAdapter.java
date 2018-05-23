@@ -69,14 +69,14 @@ public class PseudonymRecyclerViewAdapter extends RecyclerView.Adapter<Pseudonym
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         final String newPseudonym = input.getText().toString();
-                        UserManager.updateUserPseudonym(newPseudonym, conversationID);
-                    }
+						UserManager.updateUserPseudonym(newPseudonym, conversationID, users.get(position).User_ID);
+					}
                 })
                 .setNeutralButton(context.getResources().getString(R.string.settings_original), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        UserManager.updateUserPseudonym(users.get(position).User_Name, conversationID);
-                    }
+						UserManager.updateUserPseudonym(users.get(position).User_Name, conversationID, users.get(position).User_ID);
+					}
                 })
                 .setNegativeButton(context.getResources().getString(R.string.settings_cancel), new DialogInterface.OnClickListener() {
                     @Override

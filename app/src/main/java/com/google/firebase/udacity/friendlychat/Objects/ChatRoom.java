@@ -1,29 +1,35 @@
 package com.google.firebase.udacity.friendlychat.Objects;
 
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChatRoom {
-
-    public User conversationalist;
-    public ChatRoomObject chatRoomObject;
+	
+	public List<User> conversationalist;
+	public ChatRoomObject chatRoomObject;
 
     public ChatRoom() {
-    }
+		this.conversationalist = new ArrayList<>();
+	}
 
     public ChatRoom(User conversationalist) {
 
         chatRoomObject = null;
-        this.conversationalist = conversationalist;
-    }
+		this.conversationalist = new ArrayList<>();
+		this.conversationalist.add(conversationalist);
+	}
 
     public ChatRoom(String conversationID, String myID, String conversationalistID) {
-
-        chatRoomObject = new ChatRoomObject(conversationID, myID, conversationalistID);
-    }
+	
+		this.conversationalist = new ArrayList<>();
+		//chatRoomObject = new ChatRoomObject(conversationID, myID, conversationalistID);
+	}
 
     public ChatRoom(ChatRoomObject chatRoomObject) {
-
-        this.chatRoomObject = chatRoomObject;
+	
+		this.conversationalist = new ArrayList<>();
+		this.chatRoomObject = chatRoomObject;
     }
 
 

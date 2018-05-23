@@ -11,6 +11,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.firebase.udacity.friendlychat.Managers.OpenChatRoomWith.USER_CONVERSATIONS;
+
 /**
  * Created by Paweł on 10.04.2018.
  */
@@ -27,7 +29,7 @@ public class ConversationListener {
 		
 		onConversationListener = mOnConversationListener;
 		listener = createConversationListener();
-		userConversations = FirebaseDatabase.getInstance().getReference().child("user_conversations/" + currentUserID);
+		userConversations = FirebaseDatabase.getInstance().getReference().child(USER_CONVERSATIONS + "/" + currentUserID);
 		userConversations.addChildEventListener(listener);
 		
 		Log.i("Build", "ConversationListener");
