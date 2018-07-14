@@ -2,7 +2,6 @@ package com.google.firebase.udacity.friendlychat.Managers;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -20,118 +19,124 @@ import static com.google.firebase.udacity.friendlychat.Managers.UserManager.chan
 
 public class UserOnlineStatus implements UserManager.OnUserDownloadListener {
 
-    //TODO: Delete userSettingsFragment, when user logs out
+	//TODO: Delete userSettingsFragment, when user logs out
 
-    private static final UserOnlineStatus ourInstance = new UserOnlineStatus();
-    private static final int RC_SIGN_IN = 1;
-    static FirebaseAuth firebaseAuth;
-    private static FirebaseAuth.AuthStateListener authStateListener;
-    private static UserOnlineStatusListener userOnlineStatusListener;
-    private static UserManager userManager;
-    private Activity mainActivity;
+	public static final int RC_SIGN_IN = 1;
+	private static final UserOnlineStatus ourInstance = new UserOnlineStatus();
+	static FirebaseAuth firebaseAuth;
+	private static FirebaseAuth.AuthStateListener authStateListener;
+	private static UserOnlineStatusListener userOnlineStatusListener;
+	private static UserManager userManager;
+	private Activity mainActivity;
 
-    private UserOnlineStatus() {
-    }
+	private UserOnlineStatus() {
+	}
 
-    public static UserOnlineStatus getInstance() {
-        return ourInstance;
-    }
+	public static UserOnlineStatus getInstance() {
+		return ourInstance;
+	}
 
-    public void setupUserOnlineStatus(Activity activity, UserOnlineStatusListener userOnlineStatusListener) {
-        mainActivity = activity;
-        UserOnlineStatus.userOnlineStatusListener = userOnlineStatusListener;
-        authorizationSetup();
-    }
+	public void setupUserOnlineStatus(Activity activity, UserOnlineStatusListener userOnlineStatusListener) {
+		mainActivity = activity;
+		UserOnlineStatus.userOnlineStatusListener = userOnlineStatusListener;
+		authorizationSetup();
+	}
 
-    private void authorizationSetup() {
+	private void authorizationSetup() {
 
-        firebaseAuth = FirebaseAuth.getInstance();
+		firebaseAuth = FirebaseAuth.getInstance();
 
-        authStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+		authStateListener = newAuthStateListener();
 
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+		firebaseAuth.addAuthStateListener(authStateListener);
+	}
 
-                if (user == null) {
-                    UserManager.onSignOut();
-                    mainActivity.startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
-                } else {
-                    setupUserManager();
-                }
-            }
-        };
+	private FirebaseAuth.AuthStateListener newAuthStateListener() {
+		return firebaseAuth -> {
 
-        firebaseAuth.addAuthStateListener(authStateListener);
-    }
+			FirebaseUser user = firebaseAuth.getCurrentUser();
 
-    private Intent createSignUpOrLoginScreenIntent() {
+			if (user == null) {
+				UserManager.onSignOut();
+				mainActivity.startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
+			} else {
+				setupUserManager();
+			}
+		};
+	}
 
-        return AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setIsSmartLockEnabled(false)
-                .setAvailableProviders(Arrays.asList(
-                        new AuthUI.IdpConfig.EmailBuilder().build(),
-                        new AuthUI.IdpConfig.GoogleBuilder().build()))
-                .build();
-    }
+	private Intent createSignUpOrLoginScreenIntent() {
 
-    public void onActivityResult(int requestCode, int resultCode) {
+		return AuthUI.getInstance()
+				.createSignInIntentBuilder()
+				.setIsSmartLockEnabled(false)
+				.setAvailableProviders(Arrays.asList(
+						new AuthUI.IdpConfig.EmailBuilder().build(),
+						new AuthUI.IdpConfig.GoogleBuilder().build()))
+				.build();
+	}
 
-        if (requestCode == RC_SIGN_IN) {
-            if (resultCode == RESULT_OK && userOnlineStatusListener != null) {
-                authorizationSetup();
+	public void onActivityResult(int requestCode, int resultCode) {
 
-            } else if (resultCode == RESULT_CANCELED) {
-                if (UserManager.currentUser != null && userOnlineStatusListener != null) {
-                    authorizationSetup();
-                }
-                Toast.makeText(mainActivity.getApplicationContext(), mainActivity.getResources().getString(R.string.couldnt_login), Toast.LENGTH_SHORT).show();
-                mainActivity.finish();
-            }
-        }
+		if (requestCode == RC_SIGN_IN) {
+			if (resultCode == RESULT_OK && userOnlineStatusListener != null) {
+				authorizationSetup();
 
-    }
+			} else if (resultCode == RESULT_CANCELED) {
+				if (UserManager.currentUser != null && userOnlineStatusListener != null) {
+					authorizationSetup();
+				}
+				Toast.makeText(mainActivity.getApplicationContext(), mainActivity.getResources().getString(R.string.couldnt_login), Toast.LENGTH_SHORT).show();
+				mainActivity.finish();
+			}
+		}
 
-    private void setupUserManager() {
-        userManager = new UserManager(this);
-    }
+	}
 
-    public void logOut() {
+	private void setupUserManager() {
+		userManager = new UserManager(this);
+	}
 
-        userManager.clear();
-        UserManager.onSignOut();
-        FirebaseAuth.getInstance().signOut();
-    }
+	public void logOut() {
 
-    public void onPause() {
-        changeUserOnlineStatus(false);
+		userManager.clear();
+		UserManager.onSignOut();
+		FirebaseAuth.getInstance().signOut();
+	}
 
-        if (authStateListener != null)
-            firebaseAuth.removeAuthStateListener(authStateListener);
-    }
+	public void onPause() {
+		changeUserOnlineStatus(false);
 
-    public void onDestroy() {
-        onPause();
-        authStateListener = null;
-        firebaseAuth = null;
-        if (userManager != null) {
-            userManager.clear();
-        }
-    }
+		if (authStateListener != null)
+			firebaseAuth.removeAuthStateListener(authStateListener);
+	}
 
-    @Override
-    public void userDownloaded() {
-        changeUserOnlineStatus(true);
-        if (userOnlineStatusListener != null)
-            userOnlineStatusListener.userLoggedIn();
-    }
+	public void onResume() {
+		changeUserOnlineStatus(true);
+		//firebaseAuth.addAuthStateListener(authStateListener);
+	}
 
-    @Override
-    public void userDownloaded(User downloadedUser) {
-    }
+	public void onDestroy() {
+		onPause();
+		authStateListener = null;
+		firebaseAuth = null;
+		if (userManager != null) {
+			userManager.clear();
+		}
+	}
 
-    public interface UserOnlineStatusListener {
-        void userLoggedIn();
-    }
+	@Override
+	public void userDownloaded() {
+		changeUserOnlineStatus(true);
+		if (userOnlineStatusListener != null)
+			userOnlineStatusListener.userLoggedIn();
+	}
+
+	@Override
+	public void userDownloaded(User downloadedUser) {
+	}
+
+	public interface UserOnlineStatusListener {
+		void userLoggedIn();
+	}
 }

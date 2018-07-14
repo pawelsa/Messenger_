@@ -26,6 +26,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
+import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 import com.google.firebase.udacity.friendlychat.Managers.UserOnlineStatus;
 import com.google.firebase.udacity.friendlychat.R;
@@ -146,7 +147,7 @@ public class UserSettingsFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                LeftToRightDetector.goBack(getActivity());
+				FragmentsManager.goBack(getActivity());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

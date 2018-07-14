@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.HaveToBeRemoved;
 
 import android.util.Log;
 
@@ -56,7 +56,6 @@ public class ChatRoomListener {
 	public void onPause() {
 		Log.i("onPause", "ChatRoomListener");
 		referenceToChatRooms.removeEventListener(chatRoomListener);
-		chatRoomListener = null;
 	}
 
 	public void onResume() {

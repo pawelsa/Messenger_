@@ -3,6 +3,7 @@ package com.google.firebase.udacity.friendlychat.TestObjects;
 import android.annotation.SuppressLint;
 import android.util.Log;
 
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,8 +37,48 @@ public class TestObject {
 
 	public void start() {
 
-		observeUsersInConversation();
+		performSearch();
 	}
+
+
+	private void performSearch() {
+
+		DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("users");
+
+		ChildEventListener childEventListener = new ChildEventListener() {
+			@Override
+			public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+				if (dataSnapshot.exists()) {
+					User user = dataSnapshot.getValue(User.class);
+
+					Log.i("User name", user.User_Name);
+				}
+			}
+
+			@Override
+			public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+			}
+
+			@Override
+			public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+			}
+
+			@Override
+			public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+			}
+
+			@Override
+			public void onCancelled(DatabaseError databaseError) {
+
+			}
+		};
+
+		reference.orderByChild("User_Name").startAt("K").endAt("K\uf8ff").addChildEventListener(childEventListener);
+	}
+
 
 	@SuppressLint("CheckResult")
 	private void observeUsersInConversation() {

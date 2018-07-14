@@ -5,7 +5,14 @@
     android:layout_alignParentBottom="true"
     android:background="@color/colorAccent">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/message_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </android.support.v7.widget.Toolbar>
     <android.support.v7.widget.RecyclerView
+        android:layout_below="@+id/message_toolbar"
         android:id="@+id/messages"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

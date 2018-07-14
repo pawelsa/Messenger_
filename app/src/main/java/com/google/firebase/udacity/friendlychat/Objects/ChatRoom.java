@@ -5,26 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChatRoom {
-	
+
+
 	public List<User> conversationalist;
 	public ChatRoomObject chatRoomObject;
 
-    public ChatRoom() {
-		this.conversationalist = new ArrayList<>();
-	}
-
-    public ChatRoom(User conversationalist) {
-
-        chatRoomObject = null;
-		this.conversationalist = new ArrayList<>();
-		this.conversationalist.add(conversationalist);
-	}
-
-    public ChatRoom(String conversationID, String myID, String conversationalistID) {
-	
-		this.conversationalist = new ArrayList<>();
-		//chatRoomObject = new ChatRoomObject(conversationID, myID, conversationalistID);
-	}
 
     public ChatRoom(ChatRoomObject chatRoomObject) {
 	
@@ -32,9 +17,31 @@ public class ChatRoom {
 		this.chatRoomObject = chatRoomObject;
     }
 
+	public ChatRoom(List<User> conversationalist, ChatRoomObject chatRoomObject) {
+		this.conversationalist = conversationalist;
+		this.chatRoomObject = chatRoomObject;
+	}
 
     public boolean isEmpty() {
 
         return chatRoomObject == null;
     }
+
+	@Override
+	public int hashCode() {
+		return chatRoomObject.conversationID.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		super.equals(obj);
+
+		boolean result = false;
+
+		if (obj instanceof ChatRoom) {
+			ChatRoom other = (ChatRoom) obj;
+			result = this.chatRoomObject.conversationID.equals(other.chatRoomObject.conversationID);
+		}
+		return result;
+	}
 }

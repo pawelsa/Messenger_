@@ -7,12 +7,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,65 +22,87 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.R;
+import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 import com.google.firebase.udacity.friendlychat.UsersAdapter;
 
 
 public class AllConversationsFragment extends Fragment {
-	
+
 	public static final String SETTINGS_FRAGMENT = "settings_fragment";
-	
+
 	private UsersAdapter adapter;
 	private RecyclerView allUsersRecyclerView;
-	
-	
+	private FloatingActionButton searchButton;
+	private ManageDownloadingChatRooms manageDownloadingChatRooms;
+
+
 	@Nullable
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.conversations_fragment, container, false);
 	}
-	
+
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
-		
+
 		allUsersRecyclerView = view.findViewById(R.id.allUsersList);
+		searchButton = view.findViewById(R.id.floatingActionButton);
 	}
-	
+
 	@Override
 	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
+
 		setHasOptionsMenu(true);
-		
+
 		createAdapterAndSetupRecyclerView();
+		setChatRoomDownloader();
+		searchButton = getActivity().findViewById(R.id.floatingActionButton);
+		manageFloatingActionBar();
 	}
-	
+
 	private void createAdapterAndSetupRecyclerView() {
-		
+
 		adapter = new UsersAdapter(this.getContext());
 		allUsersRecyclerView.setAdapter(adapter);
 		allUsersRecyclerView.setLayoutManager(new LinearLayoutManager(this.getContext()));
 	}
-	
+
+	private void setChatRoomDownloader() {
+
+		this.manageDownloadingChatRooms = new ManageDownloadingChatRooms(adapter);
+		this.manageDownloadingChatRooms.downloadChatRoomsFromDB();
+	}
+
+	private void manageFloatingActionBar() {
+		if (searchButton != null) {
+			searchButton.setOnClickListener(v -> FragmentsManager.startSearchUserFragment((AppCompatActivity) getActivity()));
+		}
+	}
+
 	@Override
 	public void onResume() {
 		super.onResume();
 		manageActionBar();
 	}
-	
+
 	private void manageActionBar() {
-		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		Toolbar actionBar = getActivity().findViewById(R.id.conversations_toolbar);
+		((AppCompatActivity) getActivity()).setSupportActionBar(actionBar);
+		//ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
 		if (actionBar != null) {
-			actionBar.setDisplayHomeAsUpEnabled(false);
+			//actionBar.setDisplayHomeAsUpEnabled(false);
 			actionBar.setTitle(R.string.app_name);
 			actionBar.setSubtitle("");
-			actionBar.setIcon(null);
+			//actionBar.setIcon(null);
 			actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
 			changeStatusBarColor();
 		}
 	}
-	
+
 	private void changeStatusBarColor() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			int color = getResources().getColor(R.color.colorPrimaryDark);
@@ -87,42 +110,46 @@ public class AllConversationsFragment extends Fragment {
 			Color.colorToHSV(color, hsv);
 			hsv[2] *= 0.8f; // value component
 			color = Color.HSVToColor(hsv);
-			
+
 			getActivity().getWindow().setStatusBarColor(color);
 		}
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		
+
 		if (adapter != null) {
-			adapter.clear();
+			adapter.destroy();
 			adapter = null;
+		}
+		if (manageDownloadingChatRooms != null) {
+			manageDownloadingChatRooms.dispose();
+			manageDownloadingChatRooms = null;
 		}
 		Log.i("State", "OnDestroy");
 	}
-	
+
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		super.onCreateOptionsMenu(menu, inflater);
-		
+
 		menu.clear();
 		inflater.inflate(R.menu.main_menu, menu);
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		
+
 		switch (item.getItemId()) {
 			case R.id.settings_menu:
-				
+
 				UserSettingsFragment conversationsFragment = UserSettingsFragment.getInstance();
-				
+
 				FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
 				fragmentTransaction.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right).replace(R.id.messageFragment, conversationsFragment, SETTINGS_FRAGMENT).addToBackStack(null).commit();
 				return true;
-			
+
 			default:
 				return super.onOptionsItemSelected(item);
 		}

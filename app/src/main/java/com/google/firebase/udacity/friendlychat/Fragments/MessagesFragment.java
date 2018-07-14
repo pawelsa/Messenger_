@@ -8,9 +8,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
@@ -20,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -28,8 +27,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Scroller;
 
-import com.google.firebase.udacity.friendlychat.ChatRoomListener;
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
+import com.google.firebase.udacity.friendlychat.HaveToBeRemoved.ChatRoomListener;
+import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.LastSeenTime;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
@@ -38,10 +39,8 @@ import com.google.firebase.udacity.friendlychat.R;
 import com.google.firebase.udacity.friendlychat.TestObjects.TestObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class MessagesFragment extends Fragment implements ChatRoomListener.OnConversationListener, com.google.firebase.udacity.friendlychat.Managers.UserManager.OnUserDownloadListener {
@@ -56,15 +55,14 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 	public static final String CONVERSATIONALIST_PSEUDONYM = "conversationalist_pseudonym";
 	public static final MessagesFragment ourInstance = new MessagesFragment();
 	private static final int RC_PHOTO_PICKER = 2;
-	UserManager userManager;
-	String conversationID;
-	String myPseudonym;
-	List<String> conversationalistPseudonym = new ArrayList<>();
-	String conversationName;
+	private UserManager userManager;
+	private String conversationID;
+	private List<String> conversationalistPseudonym = new ArrayList<>();
+	private String conversationName;
 	private ImageButton mPhotoPickerButton;
 	private EditText mMessageEditText;
 	private ImageView mSendButton;
-	private ActionBar actionBar;
+	private Toolbar toolbar;
 	private ChatRoomListener chatRoomListener;
 	private ChatRoom chatRoom;
 	private boolean onPause = false;
@@ -117,11 +115,18 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
 	private void setupActionBar(String userName) {
 
-		if (actionBar != null && !onPause) {
+		if (toolbar != null && !onPause) {
+			ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+
 			actionBar.setDisplayHomeAsUpEnabled(true);
 			actionBar.setDisplayShowHomeEnabled(true);
 			actionBar.setDisplayUseLogoEnabled(true);
 			actionBar.setTitle(userName);
+
+/*			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowHomeEnabled(true);
+			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayUseLogoEnabled(true);
+			((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(userName);*/
 		}
 	}
 
@@ -144,15 +149,12 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
 	private void photoPickerButtonFunctionality() {
 
-		mPhotoPickerButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
+		mPhotoPickerButton.setOnClickListener(view -> {
 
-				Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-				intent.setType("image/jpeg");
-				intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-				startActivityForResult(Intent.createChooser(intent, "Complete action using"), RC_PHOTO_PICKER);
-			}
+			Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+			intent.setType("image/jpeg");
+			intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+			startActivityForResult(Intent.createChooser(intent, "Complete action using"), RC_PHOTO_PICKER);
 		});
 	}
 
@@ -185,20 +187,17 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
 	private void sendButtonFunctionality() {
 
-		mSendButton.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View view) {
+		mSendButton.setOnClickListener(view -> {
 /*
-				FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+			FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
 
-                if (newMessage.getText().trim().length() > 0) {
+if (newMessage.getText().trim().length() > 0) {
 
-                    // mDatabaseReference.push().setValue(newMessage);
-                    // Clear input box
-                    mMessageEditText.setText("");
-                }*/
+// mDatabaseReference.push().setValue(newMessage);
+// Clear input box
+mMessageEditText.setText("");
+}*/
 
-			}
 		});
 	}
 
@@ -209,14 +208,10 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
 		final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
 
-		v.setOnTouchListener(new View.OnTouchListener() {
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				return gesture.onTouchEvent(event);
-			}
-		});
+		v.setOnTouchListener((v1, event) -> gesture.onTouchEvent(event));
 
-		actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		toolbar = v.findViewById(R.id.message_toolbar);
+		((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
 
 		return v;
 	}
@@ -285,19 +280,14 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			case android.R.id.home:
-				LeftToRightDetector.goBack(getActivity());
+				FragmentsManager.goBack(getActivity());
 				return true;
 			case R.id.allInfo: {
-				ConversationInfoFragment conversationInfoFragment = new ConversationInfoFragment();
-
 				Bundle bundle = chatRoom.conversationalist.get(0).getSettingsBundle();
 				bundle.putString(CONVERSATION_ID, conversationID);
-				bundle.putString(MY_PSEUDONYM, myPseudonym);
 				bundle.putString(CONVERSATIONALIST_PSEUDONYM, conversationName);
-				conversationInfoFragment.setArguments(bundle);
 
-				FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
-				fragmentTransaction.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right).replace(R.id.messageFragment, conversationInfoFragment, "infoFragment").addToBackStack(null).commit();
+				FragmentsManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
 			}
 			default:
 				return super.onOptionsItemSelected(item);
@@ -325,7 +315,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 	}
 
 	private void changeBarColors(int color) {
-		if (actionBar != null) {
+		if (toolbar != null) {
 			changeActionBarColor(color);
 			changeStatusBarColor(color);
 		}
@@ -336,7 +326,7 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 		while (hex.length() < 6) {
 			hex = "0" + hex;
 		}
-		actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#" + hex)));
+		toolbar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#" + hex)));
 	}
 
 	private void changeStatusBarColor(int color) {
@@ -372,20 +362,9 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 				}
 			}
 		}
-		if (actionBar != null) {
+		if (toolbar != null) {
 			setUserAvatarInActionBar();
 			setUserOnlineStatusInActionBar();
-		}
-	}
-
-	void setUserOnlineStatusInActionBar() {
-		if (!onPause) {
-			String onlineStatusMessage = getResources().getString(R.string.now_online);
-
-			if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
-				onlineStatusMessage = getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)));
-			}
-			actionBar.setSubtitle(onlineStatusMessage);
 		}
 	}
 
@@ -398,49 +377,26 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
                 Bitmap bitmap1 = ((BitmapDrawable) resource).getBitmap();
 
                 Drawable drawable = new BitmapDrawable(getResources(), bitmap1);
-                actionBar.setIcon(drawable);
+                toolbar.setIcon(drawable);
             }
         });*/
-		//actionBar.setIcon(R.drawable.avatar);
+		//toolbar.setIcon(R.drawable.avatar);
+	}
+
+	void setUserOnlineStatusInActionBar() {
+		if (!onPause) {
+			String onlineStatusMessage = getResources().getString(R.string.now_online);
+
+			if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
+				onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
+			}
+			((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(onlineStatusMessage);
+		}
 	}
 
 	long getLastOnlineTimestamp(User user) {
-
 		return (long) user.timestamp.get("timestamp");
 	}
 
-	String getLastSeenOnlineStatusMessage(long lastSeen) {
 
-		long diff = returnTimeSinceLastOnlineTime(lastSeen);
-
-		String onlineStatusMessage = getResources().getString(R.string.last_seen);
-
-		long lastTimeOnline = TimeUnit.MILLISECONDS.toDays(diff);
-		if (lastTimeOnline <= 0) {
-			lastTimeOnline = TimeUnit.MILLISECONDS.toHours(diff);
-			if (lastTimeOnline <= 0) {
-				lastTimeOnline = TimeUnit.MILLISECONDS.toMinutes(diff);
-				if (lastTimeOnline <= 0) {
-					onlineStatusMessage = getResources().getString(R.string.moment_ago);
-					return onlineStatusMessage;
-				} else {
-					onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.minute);
-				}
-			} else {
-				onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.hour);
-			}
-		} else {
-			onlineStatusMessage += lastTimeOnline + getResources().getString(R.string.day);
-		}
-
-		onlineStatusMessage += (lastTimeOnline == 1 ? "" : getResources().getString(R.string.plural)) + getResources().getString(R.string.ago);
-
-		return onlineStatusMessage;
-	}
-
-	long returnTimeSinceLastOnlineTime(long time) {
-		Date lastOnline = new Date(time);
-		Date actualTime = new Date();
-		return actualTime.getTime() - lastOnline.getTime();
-	}
 }
