@@ -86,7 +86,7 @@ public class SearchUserFragment extends Fragment {
 
 		editTextDisposable = RxSearchView.queryTextChanges(searchView)
 				.startWith("")
-				.map(cast -> String.valueOf(cast))
+				.map(String::valueOf)
 				.subscribe(query -> {
 					adapter.clear();
 					searchForUser.searchUserByName(query);

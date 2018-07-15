@@ -17,8 +17,8 @@ import com.google.firebase.udacity.friendlychat.Objects.User;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.firebase.udacity.friendlychat.Managers.OpenChatRoomWith.CHAT_ROOM;
-import static com.google.firebase.udacity.friendlychat.Managers.OpenChatRoomWith.PARTICIPANTS;
+import static com.google.firebase.udacity.friendlychat.TestObjects.ConversationRequest.CHAT_ROOM;
+import static com.google.firebase.udacity.friendlychat.TestObjects.ConversationRequest.PARTICIPANTS;
 
 
 public class UserManager {

@@ -33,7 +33,7 @@
         android:backgroundTint="@color/colorPrimary"
         android:clickable="true"
         app:fabSize="normal"
-        app:srcCompat="@drawable/ic_search"
+        android:src="@drawable/ic_search"
         tools:ignore="VectorDrawableCompat" />
 
 </RelativeLayout>

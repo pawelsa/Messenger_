@@ -44,8 +44,7 @@ public class SearchForUser {
 
 		return RxSingleEventListener.observeSingleValueEvent(getUserQueryByID(userID))
 				.filter(DataSnapshot::exists)
-				.map(dataSnapshot -> dataSnapshot.getValue(User.class))
-				/*.subscribe(user -> Log.i("User data", user.User_ID))*/;
+				.map(dataSnapshot -> dataSnapshot.getValue(User.class));
 	}
 
 	private static Query getUserQueryByID(String userID) {

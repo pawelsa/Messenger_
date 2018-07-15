@@ -27,6 +27,8 @@ import com.google.firebase.udacity.friendlychat.R;
 import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 import com.google.firebase.udacity.friendlychat.UsersAdapter;
 
+import io.reactivex.disposables.Disposable;
+
 
 public class AllConversationsFragment extends Fragment {
 
@@ -35,7 +37,7 @@ public class AllConversationsFragment extends Fragment {
 	private UsersAdapter adapter;
 	private RecyclerView allUsersRecyclerView;
 	private FloatingActionButton searchButton;
-	private ManageDownloadingChatRooms manageDownloadingChatRooms;
+	private Disposable downloadChatRooms;
 
 
 	@Nullable
@@ -73,8 +75,8 @@ public class AllConversationsFragment extends Fragment {
 
 	private void setChatRoomDownloader() {
 
-		this.manageDownloadingChatRooms = new ManageDownloadingChatRooms(adapter);
-		this.manageDownloadingChatRooms.downloadChatRoomsFromDB();
+		downloadChatRooms = ManageDownloadingChatRooms.downloadChatRoomsFromDB()
+				.subscribe(roomObject -> adapter.addConversationToAdapter(roomObject));
 	}
 
 	private void manageFloatingActionBar() {
@@ -123,9 +125,8 @@ public class AllConversationsFragment extends Fragment {
 			adapter.destroy();
 			adapter = null;
 		}
-		if (manageDownloadingChatRooms != null) {
-			manageDownloadingChatRooms.dispose();
-			manageDownloadingChatRooms = null;
+		if (downloadChatRooms != null && !downloadChatRooms.isDisposed()) {
+			downloadChatRooms.dispose();
 		}
 		Log.i("State", "OnDestroy");
 	}
