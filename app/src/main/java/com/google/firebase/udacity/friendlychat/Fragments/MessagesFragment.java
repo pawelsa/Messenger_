@@ -1,6 +1,7 @@
 package com.google.firebase.udacity.friendlychat.Fragments;
 
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -28,58 +29,44 @@ import android.widget.ImageView;
 import android.widget.Scroller;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
-import com.google.firebase.udacity.friendlychat.HaveToBeRemoved.ChatRoomListener;
 import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Managers.LastSeenTime;
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
-import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
 import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.TestObjects.TestObject;
+import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.SingleOnSubscribe;
 
-public class MessagesFragment extends Fragment implements ChatRoomListener.OnConversationListener, com.google.firebase.udacity.friendlychat.Managers.UserManager.OnUserDownloadListener {
+import static com.google.firebase.udacity.friendlychat.Managers.UserManager.getCurrentUserID;
 
+
+public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnConversationListener, com.google.firebase.udacity.friendlychat.Managers.UserManager.OnUserDownloadListener*/ {
+
+	private static final int RC_PHOTO_PICKER = 2;
 	public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
 	public static final String CONVERSATION_ID = "conversationID";
 	public static final String DISPLAY_NAME = "displayName";
-	public static final String CONVERSATIONALIST_ID = "conversationalist_id";
-	public static final String CONVERSATIONALIST_DISPLAY_NAME = "conversationalist_display_name";
-	public static final String CONVERSATIONALIST_AVATAR_URL = "conversationalist_avatar_url";
-	public static final String MY_PSEUDONYM = "my_pseudonym";
 	public static final String CONVERSATIONALIST_PSEUDONYM = "conversationalist_pseudonym";
+
 	public static final MessagesFragment ourInstance = new MessagesFragment();
-	private static final int RC_PHOTO_PICKER = 2;
-	private UserManager userManager;
-	private String conversationID;
-	private List<String> conversationalistPseudonym = new ArrayList<>();
-	private String conversationName;
+
 	private ImageButton mPhotoPickerButton;
 	private EditText mMessageEditText;
 	private ImageView mSendButton;
 	private Toolbar toolbar;
-	private ChatRoomListener chatRoomListener;
-	private ChatRoom chatRoom;
-	private boolean onPause = false;
+	private ActionBar actionBar;
 
-	TestObject testObject;
+	private ChatRoom chatRoom;
 
 	public static MessagesFragment getInstance() {
 		return ourInstance;
 	}
 
-
-	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		userManager = new UserManager(this);
-	}
 
 	@Override
 	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -91,42 +78,62 @@ public class MessagesFragment extends Fragment implements ChatRoomListener.OnCon
 
 		initializeReferencesToViews();
 		settingUpUIFunctionality();
-
-
-		Log.i("Disposable", "Button");
-		if (testObject != null) {
-			testObject.onPause();
-		}
-		testObject = new TestObject();
-		testObject.start();
 	}
 
+	@SuppressLint("CheckResult")
 	private void getConversationIdAndSetupActionBar() {
 
 		Bundle bundle = getArguments();
 		if (bundle != null) {
-			conversationID = bundle.getString(CONVERSATION_ID);
-			conversationName = bundle.getString(DISPLAY_NAME);
+			String conversationID = bundle.getString(CONVERSATION_ID);
+			String conversationName = bundle.getString(DISPLAY_NAME);
 			setupActionBar(conversationName);
 
-			chatRoomListener = new ChatRoomListener(conversationID, this);
+			ManageDownloadingChatRooms.downloadChatRoom(conversationID)
+					.subscribe(downloadedChatRoom -> {
+						chatRoom = downloadedChatRoom;
+						changeBarColors();
+						if (toolbar != null) {
+							setTitle();
+							setUserAvatarInActionBar();
+							setUserOnlineStatusInActionBar();
+						}
+					});
+
+
 		}
+	}
+
+	private void setTitle() {
+		Single.create((SingleOnSubscribe<String>) emitter -> {
+
+			if (chatRoom.chatRoomObject.conversationName == null) {
+				Observable.fromIterable(chatRoom.chatRoomObject.participants.keySet())
+						.map(key -> (Map<String, Object>) chatRoom.chatRoomObject.participants.get(key))
+						.filter(user -> !user.get("ID").equals(getCurrentUserID()) && user.get("Name") != null)
+						.map(user -> user.get("Name").toString() + ", ")
+						.reduce((total, next) -> total + next)
+						.map(totalName -> totalName.length() < 50 ? totalName.substring(0, totalName.length() - 2) : totalName.substring(0, 50))
+						.subscribe(emitter::onSuccess);
+			} else {
+				emitter.onSuccess(chatRoom.chatRoomObject.conversationName);
+			}
+		})
+				.subscribe(convName -> {
+					chatRoom.chatRoomObject.conversationName = convName;
+					actionBar.setTitle(convName);
+				});
 	}
 
 	private void setupActionBar(String userName) {
 
-		if (toolbar != null && !onPause) {
-			ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		if (toolbar != null) {
+			actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
 
 			actionBar.setDisplayHomeAsUpEnabled(true);
 			actionBar.setDisplayShowHomeEnabled(true);
 			actionBar.setDisplayUseLogoEnabled(true);
 			actionBar.setTitle(userName);
-
-/*			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowHomeEnabled(true);
-			((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayUseLogoEnabled(true);
-			((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(userName);*/
 		}
 	}
 
@@ -219,8 +226,7 @@ mMessageEditText.setText("");
 	@Override
 	public void onResume() {
 		super.onResume();
-		onPause = false;
-		if (conversationalistPseudonym != null) setupActionBar(conversationName);
+
 		if (chatRoom != null && chatRoom.conversationalist != null) {
 			setUserOnlineStatusInActionBar();
 		}
@@ -229,20 +235,14 @@ mMessageEditText.setText("");
 	@Override
 	public void onPause() {
 		super.onPause();
-		if (testObject != null)
-			testObject.onPause();
-		testObject = null;
-		onPause = true;
+
 		Log.i("State", "OnPause");
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (chatRoomListener != null) {
-			chatRoomListener.destroy();
-			chatRoomListener = null;
-		}
+
 		if (chatRoom != null) {
 			chatRoom.chatRoomObject = null;
 			chatRoom = null;
@@ -283,38 +283,25 @@ mMessageEditText.setText("");
 				FragmentsManager.goBack(getActivity());
 				return true;
 			case R.id.allInfo: {
-				Bundle bundle = chatRoom.conversationalist.get(0).getSettingsBundle();
-				bundle.putString(CONVERSATION_ID, conversationID);
-				bundle.putString(CONVERSATIONALIST_PSEUDONYM, conversationName);
+				if (doesChatRoomExists()) {
+					Bundle bundle = chatRoom.conversationalist.get(0).getSettingsBundle();
+					bundle.putString(CONVERSATION_ID, chatRoom.chatRoomObject.conversationID);
+					bundle.putString(CONVERSATIONALIST_PSEUDONYM, chatRoom.chatRoomObject.conversationName);
 
-				FragmentsManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
+					FragmentsManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
+				}
 			}
 			default:
 				return super.onOptionsItemSelected(item);
 		}
 	}
 
-	@Override
-	public void addConversationToAdapter(ChatRoomObject conversation) {
-
-		if (conversation != null) {
-			chatRoom = new ChatRoom(conversation);
-
-			for (String key : conversation.participants.keySet()) {
-				Map<String, Object> user = (Map<String, Object>) chatRoom.chatRoomObject.participants.get(key);
-				if (!user.get("ID").equals(UserManager.getCurrentUserID())) {
-					String userIDToFind = user.get("ID").toString();
-					userManager.findUser(userIDToFind);
-					if (user.get("Name") != null) {
-						setupActionBar(user.get("Name").toString());
-					}
-				}
-			}
-			changeBarColors(conversation.chatColor);
-		}
+	private boolean doesChatRoomExists() {
+		return chatRoom != null && chatRoom.chatRoomObject.conversationID != null && chatRoom.chatRoomObject.conversationName != null;
 	}
 
-	private void changeBarColors(int color) {
+	private void changeBarColors() {
+		int color = chatRoom.chatRoomObject.chatColor;
 		if (toolbar != null) {
 			changeActionBarColor(color);
 			changeStatusBarColor(color);
@@ -340,34 +327,6 @@ mMessageEditText.setText("");
 		}
 	}
 
-	@Override
-	public void userDownloaded() {
-
-	}
-
-	@Override
-	public void userDownloaded(User downloadedUser) {
-
-		if (!chatRoom.conversationalist.isEmpty() && chatRoom.conversationalist.get(0).User_ID.equals(downloadedUser.User_ID)) {
-			chatRoom.conversationalist.set(0, downloadedUser);
-		} else {
-			chatRoom.conversationalist.add(downloadedUser);
-		}
-
-		if (!downloadedUser.User_ID.equals(UserManager.getCurrentUserID())) {
-			for (String key : chatRoom.chatRoomObject.participants.keySet()) {
-				Map<String, Object> user = (Map<String, Object>) chatRoom.chatRoomObject.participants.get(key);
-				if (user.get("ID").toString().equals(downloadedUser.User_ID)) {
-					conversationalistPseudonym.add(user.get("Name").toString());
-				}
-			}
-		}
-		if (toolbar != null) {
-			setUserAvatarInActionBar();
-			setUserOnlineStatusInActionBar();
-		}
-	}
-
 	private void setUserAvatarInActionBar() {
 
 /*        Glide.with(getContext()).load(chatRoom.conversationalist.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(new SimpleTarget<Drawable>() {
@@ -384,19 +343,16 @@ mMessageEditText.setText("");
 	}
 
 	void setUserOnlineStatusInActionBar() {
-		if (!onPause) {
-			String onlineStatusMessage = getResources().getString(R.string.now_online);
+		String onlineStatusMessage = getResources().getString(R.string.now_online);
 
-			if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
-				onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
-			}
-			((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(onlineStatusMessage);
+		if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
+			onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
 		}
+		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(onlineStatusMessage);
 	}
 
 	long getLastOnlineTimestamp(User user) {
 		return (long) user.timestamp.get("timestamp");
 	}
-
 
 }

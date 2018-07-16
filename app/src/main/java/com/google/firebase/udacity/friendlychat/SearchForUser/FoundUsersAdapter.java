@@ -17,7 +17,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.TestObjects.ConversationRequest;
 
 import java.util.ArrayList;
 import java.util.List;

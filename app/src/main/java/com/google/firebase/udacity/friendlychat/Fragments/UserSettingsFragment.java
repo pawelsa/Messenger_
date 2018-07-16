@@ -35,122 +35,123 @@ import static android.app.Activity.RESULT_OK;
 
 public class UserSettingsFragment extends Fragment {
 
-    private static final UserSettingsFragment ourInstance = new UserSettingsFragment();
-    private final int AVATAR_RG = 1;
-    RelativeLayout signoutSetting;
-    ImageView userAvatar;
-    public UserSettingsFragment() {
-    }
+	private static final UserSettingsFragment ourInstance = new UserSettingsFragment();
+	private final int AVATAR_RG = 1;
+	RelativeLayout signoutSetting;
+	ImageView userAvatar;
 
-    public static UserSettingsFragment getInstance() {
-        return ourInstance;
-    }
+	public UserSettingsFragment() {
+	}
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	public static UserSettingsFragment getInstance() {
+		return ourInstance;
+	}
 
-        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-    }
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
+		}
+	}
 
-        View v = inflater.inflate(R.layout.fragment_user_settings, container, false);
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
+		View v = inflater.inflate(R.layout.fragment_user_settings, container, false);
 
-        v.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gesture.onTouchEvent(event);
-            }
-        });
+		final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
 
-        return v;
-    }
+		v.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return gesture.onTouchEvent(event);
+			}
+		});
 
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+		return v;
+	}
 
-        signoutSetting = view.findViewById(R.id.sign_out_settings);
-        userAvatar = view.findViewById(R.id.current_user_avatar);
+	@Override
+	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+		super.onViewCreated(view, savedInstanceState);
 
-        setAvatarPhoto(view);
-    }
+		signoutSetting = view.findViewById(R.id.sign_out_settings);
+		userAvatar = view.findViewById(R.id.current_user_avatar);
 
-    private void setAvatarPhoto(View view) {
-        if (UserManager.currentUser != null) {
-            String avatarPhoto = UserManager.currentUser.avatarUri;
-            if (avatarPhoto != null && !avatarPhoto.equals("null")) {
-                Glide.with(view).load(UserManager.currentUser.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(userAvatar);
-            }
-        }
-    }
+		setAvatarPhoto(view);
+	}
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+	private void setAvatarPhoto(View view) {
+		if (UserManager.getCurrentUser() != null) {
+			String avatarPhoto = UserManager.getCurrentUserAvatarUri();
+			if (avatarPhoto != null && !avatarPhoto.equals("null")) {
+				Glide.with(view).load(UserManager.getCurrentUserAvatarUri()).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(userAvatar);
+			}
+		}
+	}
 
-        setHasOptionsMenu(true);
+	@Override
+	public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
 
-        signoutSetting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UserOnlineStatus userOnlineStatus = UserOnlineStatus.getInstance();
-                userOnlineStatus.logOut();
-            }
-        });
+		setHasOptionsMenu(true);
 
-        userAvatar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                startActivityForResult(intent, AVATAR_RG);
-            }
-        });
-    }
+		signoutSetting.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				UserOnlineStatus userOnlineStatus = UserOnlineStatus.getInstance();
+				userOnlineStatus.signOut();
+			}
+		});
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+		userAvatar.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(Intent.ACTION_PICK);
+				intent.setType("image/*");
+				startActivityForResult(intent, AVATAR_RG);
+			}
+		});
+	}
 
-        if (resultCode == RESULT_OK && requestCode == AVATAR_RG && data != null) {
-            Uri photo = data.getData();
-            UserManager.currentUser.avatarUri = photo.toString();
-            setAvatarPhoto(getView());
-            StorageReference photosReference = FirebaseStorage.getInstance().getReference().child("Images").child(UserManager.getCurrentUserID());
-            photosReference.putFile(photo).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Uri photoUri = taskSnapshot.getDownloadUrl();
-                    UserManager.setCurrentUserAvatarUri(photoUri);
-                }
-            });
-        }
-    }
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
+		if (resultCode == RESULT_OK && requestCode == AVATAR_RG && data != null && data.getData() != null) {
+			Uri photo = data.getData();
+			UserManager.setCurrentUserAvatarUri(photo);
+			setAvatarPhoto(getView());
+			StorageReference photosReference = FirebaseStorage.getInstance().getReference().child("Images").child(UserManager.getCurrentUserID());
+			photosReference.putFile(photo).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+				@Override
+				public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+					Uri photoUri = taskSnapshot.getDownloadUrl();
+					UserManager.setCurrentUserAvatarUri(photoUri);
+				}
+			});
+		}
+	}
 
-        menu.clear();
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+		super.onCreateOptionsMenu(menu, inflater);
 
-    }
+		menu.clear();
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case android.R.id.home:
 				FragmentsManager.goBack(getActivity());
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
 }

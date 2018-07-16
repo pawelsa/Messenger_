@@ -14,7 +14,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.firebase.udacity.friendlychat.TestObjects.ConversationRequest.CHAT_ROOM;
+import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.CHAT_ROOM;
 
 
 public class ColorRecyclerViewAdapter extends RecyclerView.Adapter<ColorRecyclerViewAdapter.ColorViewHolder> {

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.google.firebase.udacity.friendlychat.Fragments.AllConversationsFragment;
 import com.google.firebase.udacity.friendlychat.Fragments.ConversationInfoFragment;
@@ -70,6 +71,7 @@ public class FragmentsManager {
 	}
 
 	public static void destroy(AppCompatActivity activity) {
+		Log.i("Fragment manager", "destroy");
 		FragmentManager fragmentManager = activity.getSupportFragmentManager();
 		fragmentManager.popBackStack();
 	}

@@ -8,49 +8,51 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
-import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.PseudonymRecyclerViewAdapter;
 import com.google.firebase.udacity.friendlychat.R;
+import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATIONALIST_PSEUDONYM;
 import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATION_ID;
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.MY_PSEUDONYM;
 
 public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 
-    User conversationalist;
-    private RecyclerView pseudonymRecyclerView;
+	private RecyclerView pseudonymRecyclerView;
+	private PseudonymRecyclerViewAdapter adapter;
 
-    public PseudonymBottomSheet() {
-    }
+	private String conversationID;
 
-    @Override
-    public void setupDialog(Dialog dialog, int style) {
-        super.setupDialog(dialog, style);
+	public PseudonymBottomSheet() {
+	}
 
-        View contentView = View.inflate(getContext(), R.layout.pseudonym_change_layout, null);
-        pseudonymRecyclerView = contentView.findViewById(R.id.pseudonym_change_recycler_view);
-        dialog.setContentView(contentView);
-    }
+	@Override
+	public void setupDialog(Dialog dialog, int style) {
+		super.setupDialog(dialog, style);
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+		View contentView = View.inflate(getContext(), R.layout.pseudonym_change_layout, null);
+		pseudonymRecyclerView = contentView.findViewById(R.id.pseudonym_change_recycler_view);
+		dialog.setContentView(contentView);
+	}
 
-        Bundle bundle = getArguments();
-        if (bundle != null) {
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
 
-            conversationalist = new User(bundle);
-            PseudonymRecyclerViewAdapter adapter = new PseudonymRecyclerViewAdapter(getActivity(), bundle.getString(CONVERSATION_ID));
-            adapter.add(conversationalist, bundle.getString(CONVERSATIONALIST_PSEUDONYM));
-            adapter.add(UserManager.currentUser, bundle.getString(MY_PSEUDONYM));
+		Bundle bundle = getArguments();
 
-            pseudonymRecyclerView.setAdapter(adapter);
-            pseudonymRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        } else {
-            FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-            fragmentManager.popBackStack();
-        }
-    }
+		if (bundle != null) {
+			conversationID = bundle.getString(CONVERSATION_ID);
+
+			adapter = new PseudonymRecyclerViewAdapter(getActivity(), bundle.getString(CONVERSATION_ID));
+			pseudonymRecyclerView.setAdapter(adapter);
+			pseudonymRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+		} else {
+			FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+			fragmentManager.popBackStack();
+		}
+
+
+		ManageDownloadingChatRooms.downloadChatRoom(conversationID)
+				.filter(downloadedChatRoom -> downloadedChatRoom.conversationalist.size() + 1 == downloadedChatRoom.chatRoomObject.participants.size())
+				.subscribe(downloadedChatRoom -> adapter.add(downloadedChatRoom));
+	}
 }

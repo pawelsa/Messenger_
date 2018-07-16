@@ -25,7 +25,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.operators.flowable.FlowableJust;
 import io.reactivex.schedulers.Schedulers;
 
-import static com.google.firebase.udacity.friendlychat.TestObjects.ConversationRequest.CHAT_ROOM;
+import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.CHAT_ROOM;
 
 /**
  * Created by Paweł on 20.05.2018.

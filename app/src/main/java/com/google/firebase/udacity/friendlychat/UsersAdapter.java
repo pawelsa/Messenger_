@@ -1,5 +1,6 @@
 package com.google.firebase.udacity.friendlychat;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -81,6 +82,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 		holder.lastMessageSendTime.setText(time);
 	}
 
+	@SuppressLint("CheckResult")
 	private void setConversationName(int position) {
 
 		Single.create((SingleOnSubscribe<String>) emitter -> {
@@ -92,8 +94,8 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 						.filter(user -> !user.get("ID").equals(getCurrentUserID()) && user.get("Name") != null)
 						.map(user -> user.get("Name").toString() + ", ")
 						.reduce((total, next) -> total + next)
-						//.map(totalName-> totalName.length()<50 ? totalName.substring(0,  totalName.length()-2) : totalName.substring(0, 50))
-						.subscribe(userName -> emitter.onSuccess(userName));
+						.map(totalName -> totalName.length() < 50 ? totalName.substring(0, totalName.length() - 2) : totalName.substring(0, 50))
+						.subscribe(emitter::onSuccess);
 			} else {
 				emitter.onSuccess(chatRoomList.get(position).chatRoomObject.conversationName);
 			}

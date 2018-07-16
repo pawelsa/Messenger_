@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.TestObjects;
+package com.google.firebase.udacity.friendlychat.SearchForUser;
 
 import android.content.Context;
 import android.widget.Toast;

@@ -6,11 +6,12 @@ import com.google.firebase.database.ServerValue;
 
 import java.util.HashMap;
 
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATIONALIST_AVATAR_URL;
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATIONALIST_DISPLAY_NAME;
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATIONALIST_ID;
-
 public class User {
+
+	private static final String CONVERSATIONALIST_ID = "conversationalist_id";
+	private static final String CONVERSATIONALIST_DISPLAY_NAME = "conversationalist_display_name";
+	private static final String CONVERSATIONALIST_AVATAR_URL = "conversationalist_avatar_url";
+
 
     public String User_ID;
     public String User_Name;
@@ -50,4 +51,17 @@ public class User {
         bundle.putString(CONVERSATIONALIST_AVATAR_URL, avatarUri);
         return bundle;
     }
+
+	@Override
+	public boolean equals(Object obj) {
+		super.equals(obj);
+
+		boolean result = false;
+
+		if (obj instanceof User) {
+			User other = (User) obj;
+			result = this.User_ID.equals(other.User_ID);
+		}
+		return result;
+	}
 }

@@ -21,8 +21,8 @@ public class ChatRoomObject {
 	
 	public ChatRoomObject(String conversationID, String myID, String conversationalistID, String conversationalistName) {
 		participants = new HashMap<>();
-		
-		participants.put(myID, ChatRoomUserObject.createUser(myID, UserManager.currentUser.User_Name));
+
+		participants.put(myID, ChatRoomUserObject.createUser(myID, UserManager.getCurrentUserName()));
 		participants.put(conversationalistID, ChatRoomUserObject.createUser(conversationalistID, conversationalistName));
 		this.conversationID = conversationID;
         String hex = "42E1F4";

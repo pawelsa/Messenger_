@@ -81,7 +81,10 @@ public class AllConversationsFragment extends Fragment {
 
 	private void manageFloatingActionBar() {
 		if (searchButton != null) {
-			searchButton.setOnClickListener(v -> FragmentsManager.startSearchUserFragment((AppCompatActivity) getActivity()));
+			searchButton.setOnClickListener(v -> {
+				FragmentsManager.startSearchUserFragment((AppCompatActivity) getActivity());
+				Log.i("FAB", "clicked");
+			});
 		}
 	}
 
