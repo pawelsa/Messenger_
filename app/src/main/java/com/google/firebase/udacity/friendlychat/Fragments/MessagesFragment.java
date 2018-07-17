@@ -3,7 +3,6 @@ package com.google.firebase.udacity.friendlychat.Fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.Scroller;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
+import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
 import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Managers.LastSeenTime;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
@@ -302,30 +302,19 @@ mMessageEditText.setText("");
 
 	private void changeBarColors() {
 		int color = chatRoom.chatRoomObject.chatColor;
-		if (toolbar != null) {
-			changeActionBarColor(color);
-			changeStatusBarColor(color);
+		if (toolbar != null && actionBar != null) {
+
+			ColorDrawable actionBarColor = ActionBarManager.getActionBarColor(color);
+			actionBar.setBackgroundDrawable(actionBarColor);
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				int statusBarColor = ActionBarManager.getStatusBarColor(color);
+				if (statusBarColor != -1)
+					getActivity().getWindow().setStatusBarColor(statusBarColor);
+			}
 		}
 	}
 
-	private void changeActionBarColor(int color) {
-		String hex = Integer.toHexString(color);
-		while (hex.length() < 6) {
-			hex = "0" + hex;
-		}
-		toolbar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#" + hex)));
-	}
-
-	private void changeStatusBarColor(int color) {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			float[] hsv = new float[3];
-			Color.colorToHSV(color, hsv);
-			hsv[2] *= 0.8f; // value component
-			color = Color.HSVToColor(hsv);
-
-			getActivity().getWindow().setStatusBarColor(color);
-		}
-	}
 
 	private void setUserAvatarInActionBar() {
 
@@ -343,9 +332,10 @@ mMessageEditText.setText("");
 	}
 
 	void setUserOnlineStatusInActionBar() {
-		String onlineStatusMessage = getResources().getString(R.string.now_online);
+		String onlineStatusMessage = "";
 
 		if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
+			onlineStatusMessage = getResources().getString(R.string.now_online);
 			onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
 		}
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(onlineStatusMessage);

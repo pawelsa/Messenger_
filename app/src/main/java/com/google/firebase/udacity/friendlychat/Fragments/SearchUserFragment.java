@@ -1,6 +1,7 @@
 package com.google.firebase.udacity.friendlychat.Fragments;
 
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
+import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
 import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.R;
 import com.google.firebase.udacity.friendlychat.SearchForUser.FoundUsersAdapter;
@@ -67,6 +69,9 @@ public class SearchUserFragment extends Fragment {
 		actionBar.setTitle(null);
 		actionBar.setSubtitle(null);
 		actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
+		int statusBarColor = ActionBarManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+		if (statusBarColor != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			getActivity().getWindow().setStatusBarColor(statusBarColor);
 	}
 
 	@Override

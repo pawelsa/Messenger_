@@ -2,7 +2,6 @@ package com.google.firebase.udacity.friendlychat.Fragments;
 
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +24,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
+import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
 import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
@@ -43,7 +43,6 @@ public class ConversationInfoFragment extends Fragment {
 
 	private Bundle bundle;
 	private String conversationID;
-	//private ChatRoomListener chatRoomListener;
 	private ChatRoom chatRoom;
 
 
@@ -130,26 +129,14 @@ public class ConversationInfoFragment extends Fragment {
 	}
 
 	private void changeActionBarAndStatusBarColor(int color) {
-		changeActionBarColor(color);
-		changeStatusBarColor(color);
-	}
 
-	private void changeActionBarColor(int color) {
-		String hex = Integer.toHexString(color);
-		while (hex.length() < 6) {
-			hex = "0" + hex;
-		}
-		actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#" + hex)));
-	}
+		ColorDrawable actionBarColor = ActionBarManager.getActionBarColor(color);
+		actionBar.setBackgroundDrawable(actionBarColor);
 
-	private void changeStatusBarColor(int color) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			float[] hsv = new float[3];
-			Color.colorToHSV(color, hsv);
-			hsv[2] *= 0.8f; // value component
-			color = Color.HSVToColor(hsv);
-
-			getActivity().getWindow().setStatusBarColor(color);
+			int statusBarColor = ActionBarManager.getStatusBarColor(color);
+			if (statusBarColor != -1)
+				getActivity().getWindow().setStatusBarColor(statusBarColor);
 		}
 	}
 
@@ -165,10 +152,10 @@ public class ConversationInfoFragment extends Fragment {
 				.setView(input)
 				.setPositiveButton(getContext().getResources().getString(R.string.settings_confirm), (dialog, which) -> {
 					final String newName = input.getText().toString();
-					UserManager.updateConversationName(newName, conversationID);
+					UserManager.removeConversationName(newName, conversationID);
 				})
 				.setNeutralButton(getContext().getResources().getString(R.string.settings_original), ((dialog, which) ->
-						UserManager.updateConversationName(conversationID)))
+						UserManager.removeConversationName(conversationID)))
 				.setNegativeButton(getContext().getResources().getString(R.string.settings_cancel), (dialog, which) ->
 						dialog.cancel());
 		alertDialogBuilder.show();
@@ -188,20 +175,16 @@ public class ConversationInfoFragment extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
-		//chatRoomListener.onResume();
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
-		//chatRoomListener.onPause();
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		//chatRoomListener.destroy();
-		Log.i("State", "OnDestroy");
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public class UserManager {
 
 	static User currentUser;
 
-	public static void updateConversationName(final String newName, final String conversationID) {
+	public static void removeConversationName(final String newName, final String conversationID) {
 		if (newName != null && conversationID != null) {
 
 			DatabaseReference pseudonymReference = FirebaseDatabase.getInstance().getReference().child(CHAT_ROOM).child(conversationID).child("conversationName");
@@ -38,9 +38,17 @@ public class UserManager {
 		}
 	}
 
-	public static void updateConversationName(final String conversationID) {
+	public static void removeConversationName(final String conversationID) {
 		DatabaseReference pseudonymReference = FirebaseDatabase.getInstance().getReference().child(CHAT_ROOM).child(conversationID).child("conversationName");
 		pseudonymReference.removeValue();
+	}
+
+	public static void setCurrentUserAvatarUri(Uri photoUri) {
+		Map<String, Object> photoUpdate = new HashMap<>();
+		currentUser.avatarUri = photoUri.toString();
+		photoUpdate.put(AVATAR_URI, photoUri.toString());
+		DatabaseReference referenceToUserAvatarUri = FirebaseDatabase.getInstance().getReference().child(USERS).child(currentUser.User_ID);
+		referenceToUserAvatarUri.updateChildren(photoUpdate);
 	}
 
 	public static String getCurrentUserID() {
@@ -61,13 +69,5 @@ public class UserManager {
 
 	public static String getCurrentUserAvatarUri() {
 		return currentUser.avatarUri;
-	}
-
-	public static void setCurrentUserAvatarUri(Uri photoUri) {
-		Map<String, Object> photoUpdate = new HashMap<>();
-		currentUser.avatarUri = photoUri.toString();
-		photoUpdate.put(AVATAR_URI, photoUri.toString());
-		DatabaseReference referenceToUserAvatarUri = FirebaseDatabase.getInstance().getReference().child(USERS).child(currentUser.User_ID);
-		referenceToUserAvatarUri.updateChildren(photoUpdate);
 	}
 }
