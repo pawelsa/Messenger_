@@ -1,7 +1,6 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters;
 
 
-import android.app.AlertDialog;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -23,16 +23,19 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.ColorBottomSheet.ColorBottomSheet;
+import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.PseudonymBottomSheet.PseudonymBottomSheet;
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
-import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATION_ID;
+import io.reactivex.disposables.Disposable;
 
+import static com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.Messages.MessagesFragment.CONVERSATION_ID;
 
 public class ConversationInfoFragment extends Fragment {
 
@@ -44,6 +47,8 @@ public class ConversationInfoFragment extends Fragment {
 	private Bundle bundle;
 	private String conversationID;
 	private ChatRoom chatRoom;
+
+	private Disposable downloadChatRoom;
 
 
 	@Nullable
@@ -81,16 +86,7 @@ public class ConversationInfoFragment extends Fragment {
 		if (bundle != null) {
 			conversationID = bundle.getString(CONVERSATION_ID);
 
-
-			ManageDownloadingChatRooms.downloadChatRoom(conversationID)
-					.subscribe(chatRoom1 -> {
-						chatRoom = chatRoom1;
-						changeActionBarAndStatusBarColor(chatRoom.chatRoomObject.chatColor);
-						Log.i("Size", Integer.toString(chatRoom.conversationalist.size()));
-						if (chatRoom.conversationalist.size() >= 2) {
-							nameSettings.setVisibility(View.VISIBLE);
-						}
-					}, Throwable::printStackTrace, () -> Log.i("ConversationInfoFragmen", "chatRoom downloaded"));
+			downloadChatRoom = startDownloadingChatRoom();
 
 		} else {
 			FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -98,7 +94,6 @@ public class ConversationInfoFragment extends Fragment {
 		}
 
 		colorSettings.setOnClickListener(v -> {
-
 			ColorBottomSheet colorBottomSheet = new ColorBottomSheet();
 			colorBottomSheet.setArguments(bundle);
 			colorBottomSheet.show(getActivity().getSupportFragmentManager(), colorBottomSheet.getTag());
@@ -110,9 +105,23 @@ public class ConversationInfoFragment extends Fragment {
 			pseudonymBottomSheet.show(getActivity().getSupportFragmentManager(), pseudonymBottomSheet.getTag());
 		});
 
-		nameSettings.setOnClickListener(v -> {
-			buildConversationNameChangeAlertDialog();
-		});
+		nameSettings.setOnClickListener(v ->
+				buildConversationNameChangeAlertDialog()
+		);
+	}
+
+	private Disposable startDownloadingChatRoom() {
+		return ManageDownloadingChatRooms.downloadChatRoom(conversationID)
+				.subscribe(chatRoom1 -> {
+							chatRoom = chatRoom1;
+							changeActionBarAndStatusBarColor(chatRoom.chatRoomObject.chatColor);
+							Log.i("Size", Integer.toString(chatRoom.conversationalist.size()));
+							if (chatRoom.conversationalist.size() >= 2) {
+								nameSettings.setVisibility(View.VISIBLE);
+							}
+						},
+						Throwable::printStackTrace,
+						() -> Log.i("ConversationInfoFragmen", "chatRoom downloaded"));
 	}
 
 	private void setupActionBar() {
@@ -130,11 +139,11 @@ public class ConversationInfoFragment extends Fragment {
 
 	private void changeActionBarAndStatusBarColor(int color) {
 
-		ColorDrawable actionBarColor = ActionBarManager.getActionBarColor(color);
+		ColorDrawable actionBarColor = ColorManager.getActionBarColor(color);
 		actionBar.setBackgroundDrawable(actionBarColor);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			int statusBarColor = ActionBarManager.getStatusBarColor(color);
+			int statusBarColor = ColorManager.getStatusBarColor(color);
 			if (statusBarColor != -1)
 				getActivity().getWindow().setStatusBarColor(statusBarColor);
 		}
@@ -175,16 +184,28 @@ public class ConversationInfoFragment extends Fragment {
 	@Override
 	public void onResume() {
 		super.onResume();
+
+		if (downloadChatRoom != null && downloadChatRoom.isDisposed()) {
+			downloadChatRoom = startDownloadingChatRoom();
+		}
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+
+		if (downloadChatRoom != null && !downloadChatRoom.isDisposed()) {
+			downloadChatRoom.dispose();
+		}
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
+
+		if (downloadChatRoom != null && !downloadChatRoom.isDisposed()) {
+			downloadChatRoom.dispose();
+		}
 	}
 
 	@Override

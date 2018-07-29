@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.AllConversations;
 
 
 import android.graphics.drawable.ColorDrawable;
@@ -21,11 +21,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.UserSettingsFragment;
+import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
-import com.google.firebase.udacity.friendlychat.UsersAdapter;
 
 import io.reactivex.disposables.Disposable;
 
@@ -82,7 +82,8 @@ public class AllConversationsFragment extends Fragment {
 	private void manageFloatingActionBar() {
 		if (searchButton != null) {
 			searchButton.setOnClickListener(v -> {
-				FragmentsManager.startSearchUserFragment((AppCompatActivity) getActivity());
+				FragmentsManager fragmentManager = FragmentsManager.getInstance();
+				fragmentManager.startSearchUserFragment((AppCompatActivity) getActivity());
 				Log.i("FAB", "clicked");
 			});
 		}
@@ -102,7 +103,7 @@ public class AllConversationsFragment extends Fragment {
 			actionBar.setTitle(R.string.app_name);
 			actionBar.setSubtitle("");
 			actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
-			int statusBarColor = ActionBarManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+			int statusBarColor = ColorManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
 			if (statusBarColor != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 				getActivity().getWindow().setStatusBarColor(statusBarColor);
 		}

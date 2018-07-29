@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_alignParentBottom="true"
@@ -8,21 +9,27 @@
     <android.support.v7.widget.Toolbar
         android:id="@+id/message_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
     </android.support.v7.widget.Toolbar>
+
     <android.support.v7.widget.RecyclerView
-        android:layout_below="@+id/message_toolbar"
-        android:id="@+id/messages"
+        android:id="@+id/messages_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/linearLayout" />
+        android:layout_height="0dp"
+        android:layout_alignTop="@+id/linear_layout"
+        android:layout_below="@+id/message_toolbar"
+        app:layout_constraintBottom_toTopOf="@+id/linear_layout"
+        app:layout_constraintTop_toBottomOf="@+id/message_toolbar" />
 
 
     <LinearLayout
-        android:id="@+id/linearLayout"
+        android:id="@+id/linear_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="42dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
@@ -30,23 +37,28 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingBottom="5dp"
-        android:paddingTop="5dp">
+        android:paddingTop="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
-            android:id="@+id/photoPickerButton"
+            android:id="@+id/photo_picker_button"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
-            android:background="@drawable/ic_insert_photo" />
+            android:background="@drawable/ic_insert_photo"
+            android:contentDescription="@string/browse_photos" />
 
         <EditText
-            android:id="@+id/messageEditText"
+            android:id="@+id/message_edit_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:background="@drawable/enter_message_rectangle"
+            android:inputType="text"
             android:paddingBottom="3dp"
             android:paddingEnd="5dp"
             android:paddingLeft="10dp"
@@ -55,14 +67,15 @@
             android:paddingTop="3dp" />
 
         <ImageView
-            android:id="@+id/sendButton"
+            android:id="@+id/send_button"
             android:layout_width="wrap_content"
             android:layout_height="34dp"
             android:layout_gravity="center_vertical"
+            android:contentDescription="@string/send"
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
             android:src="@drawable/ic_send"
             android:text="@string/send_button_label" />
 
     </LinearLayout>
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

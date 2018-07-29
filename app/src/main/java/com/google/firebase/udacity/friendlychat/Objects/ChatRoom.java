@@ -22,6 +22,10 @@ public class ChatRoom {
 		this.chatRoomObject = chatRoomObject;
 	}
 
+	public String getConversationID() {
+		return chatRoomObject.conversationID;
+	}
+
     public boolean isEmpty() {
 
         return chatRoomObject == null;

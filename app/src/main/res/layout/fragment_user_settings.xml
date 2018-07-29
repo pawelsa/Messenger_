@@ -1,51 +1,78 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#abc8e2"
+    android:background="@color/colorAccent"
     android:orientation="vertical"
-    tools:context="com.google.firebase.udacity.friendlychat.Fragments.UserSettingsFragment">
+    tools:context="com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.UserSettingsFragment">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/user_settings_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/current_user_avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
     </android.support.v7.widget.Toolbar>
+
     <ImageView
         android:id="@+id/current_user_avatar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="50dp"
-        android:layout_marginTop="20dp"
-        android:minHeight="200dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
         android:contentDescription="@string/avatar_picture"
-        android:src="@drawable/ic_person" />
+        android:minHeight="200dp"
+        android:src="@drawable/ic_person"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/user_settings_toolbar" />
 
-    <RelativeLayout
+    <android.support.constraint.ConstraintLayout
         android:id="@+id/notification_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#abc8e2"
+        android:layout_marginTop="24dp"
+        android:background="@color/colorAccent"
         android:elevation="2dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/current_user_avatar">
 
         <ImageView
             android:id="@+id/notification_settings_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
             android:padding="10dp"
-            android:src="@drawable/ic_notifications" />
+            android:src="@drawable/ic_notifications"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/notification_settings_icon"
-            android:layout_alignTop="@+id/notification_settings_icon"
-            android:layout_toRightOf="@+id/notification_settings_icon"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
-            android:layout_toEndOf="@+id/notification_settings_icon"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/notification_settings_icon"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/notification_settings_title"
@@ -62,21 +89,21 @@
                 android:textSize="10sp" />
         </LinearLayout>
 
-    </RelativeLayout>
+    </android.support.constraint.ConstraintLayout>
 
-    <android.support.v4.widget.Space
-        android:layout_width="match_parent"
-        android:layout_height="5dp" />
-
-    <RelativeLayout
+    <android.support.constraint.ConstraintLayout
         android:id="@+id/sign_out_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#abc8e2"
+        android:layout_marginTop="24dp"
+        android:background="@color/colorAccent"
         android:clickable="true"
         android:elevation="2dp"
         android:focusable="true"
-        android:padding="10dp">
+        android:padding="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/notification_settings">
 
         <TextView
             android:layout_width="wrap_content"
@@ -84,10 +111,15 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_marginLeft="34dp"
-            android:layout_marginStart="34dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="48dp"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="8dp"
             android:text="@string/log_out"
             android:textSize="15sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
-</LinearLayout>
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </android.support.constraint.ConstraintLayout>
+</android.support.constraint.ConstraintLayout>

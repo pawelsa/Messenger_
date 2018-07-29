@@ -1,34 +1,35 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters;
 
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
-import com.google.firebase.udacity.friendlychat.Managers.UserOnlineStatus;
+import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserOnlineStatus;
 import com.google.firebase.udacity.friendlychat.R;
 
 import static android.app.Activity.RESULT_OK;
@@ -37,8 +38,8 @@ public class UserSettingsFragment extends Fragment {
 
 	private static final UserSettingsFragment ourInstance = new UserSettingsFragment();
 	private final int AVATAR_RG = 1;
-	RelativeLayout signoutSetting;
-	ImageView userAvatar;
+	private ConstraintLayout signOutSetting;
+	private ImageView userAvatar;
 
 	public UserSettingsFragment() {
 	}
@@ -64,12 +65,7 @@ public class UserSettingsFragment extends Fragment {
 
 		final GestureDetector gesture = LeftToRightDetector.getInstance(getActivity());
 
-		v.setOnTouchListener(new View.OnTouchListener() {
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				return gesture.onTouchEvent(event);
-			}
-		});
+		v.setOnTouchListener((v1, event) -> gesture.onTouchEvent(event));
 
 		return v;
 	}
@@ -78,7 +74,7 @@ public class UserSettingsFragment extends Fragment {
 	public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
 		super.onViewCreated(view, savedInstanceState);
 
-		signoutSetting = view.findViewById(R.id.sign_out_settings);
+		signOutSetting = view.findViewById(R.id.sign_out_settings);
 		userAvatar = view.findViewById(R.id.current_user_avatar);
 
 		setAvatarPhoto(view);
@@ -98,23 +94,38 @@ public class UserSettingsFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 
 		setHasOptionsMenu(true);
+		manageActionBar();
 
-		signoutSetting.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				UserOnlineStatus userOnlineStatus = UserOnlineStatus.getInstance();
-				userOnlineStatus.signOut();
-			}
+		signOutSetting.setOnClickListener(v -> {
+			UserOnlineStatus userOnlineStatus = UserOnlineStatus.getInstance();
+			userOnlineStatus.signOut();
 		});
 
-		userAvatar.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				Intent intent = new Intent(Intent.ACTION_PICK);
-				intent.setType("image/*");
-				startActivityForResult(intent, AVATAR_RG);
-			}
+		userAvatar.setOnClickListener(v -> {
+			Intent intent = new Intent(Intent.ACTION_PICK);
+			intent.setType("image/*");
+			startActivityForResult(intent, AVATAR_RG);
 		});
+	}
+
+	private void manageActionBar() {
+		Toolbar toolbar = getActivity().findViewById(R.id.user_settings_toolbar);
+		((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+
+		ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setDisplayHomeAsUpEnabled(true);
+			actionBar.setDisplayShowHomeEnabled(true);
+			actionBar.setDisplayUseLogoEnabled(true);
+		}
+		if (toolbar != null) {
+			toolbar.setTitle(R.string.settings);
+			toolbar.setSubtitle("");
+			toolbar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
+			int statusBarColor = ColorManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+			if (statusBarColor != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+				getActivity().getWindow().setStatusBarColor(statusBarColor);
+		}
 	}
 
 	@Override
@@ -126,12 +137,9 @@ public class UserSettingsFragment extends Fragment {
 			UserManager.setCurrentUserAvatarUri(photo);
 			setAvatarPhoto(getView());
 			StorageReference photosReference = FirebaseStorage.getInstance().getReference().child("Images").child(UserManager.getCurrentUserID());
-			photosReference.putFile(photo).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-				@Override
-				public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-					Uri photoUri = taskSnapshot.getDownloadUrl();
-					UserManager.setCurrentUserAvatarUri(photoUri);
-				}
+			photosReference.putFile(photo).addOnSuccessListener(taskSnapshot -> {
+				Uri photoUri = taskSnapshot.getDownloadUrl();
+				UserManager.setCurrentUserAvatarUri(photoUri);
 			});
 		}
 	}

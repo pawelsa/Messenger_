@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Managers;
+package com.google.firebase.udacity.friendlychat.Managers.App;
 
 import android.content.res.Resources;
 

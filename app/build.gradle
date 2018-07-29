@@ -56,6 +56,8 @@ dependencies {
     implementation 'com.jakewharton.rxbinding2:rxbinding:2.1.1'
     implementation 'com.jakewharton.rxbinding2:rxbinding-appcompat-v7:2.1.1'
 
+    implementation 'com.cantrowitz:rxbroadcast:2.0.0'
+
     //noinspection GradleCompatible
     implementation 'com.android.support:design:26.1.0'
     implementation 'com.android.support:appcompat-v7:26.1.0'

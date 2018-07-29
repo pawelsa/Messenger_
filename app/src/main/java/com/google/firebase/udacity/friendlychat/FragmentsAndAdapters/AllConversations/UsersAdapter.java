@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.AllConversations;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -15,8 +15,9 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
+import com.google.firebase.udacity.friendlychat.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.SingleOnSubscribe;
 
-import static com.google.firebase.udacity.friendlychat.Managers.UserManager.getCurrentUserID;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.UserManager.getCurrentUserID;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
 
@@ -34,7 +35,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 	private List<ChatRoom> chatRoomList;
 
 
-	public UsersAdapter(Context context) {
+	UsersAdapter(Context context) {
 		this.context = context;
 		this.chatRoomList = new ArrayList<>();
 	}
@@ -108,7 +109,8 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 		holder.userItemLayout.setOnClickListener(v -> {
 
 			if (chatRoomList.get(position).chatRoomObject.conversationName != null) {
-				FragmentsManager.startMessageFragment((AppCompatActivity) context, chatRoomList.get(position).chatRoomObject.conversationID);
+				FragmentsManager fragmentManager = FragmentsManager.getInstance();
+				fragmentManager.startMessageFragment((AppCompatActivity) context, chatRoomList.get(position).chatRoomObject.conversationID);
 			}
 		});
 	}
@@ -122,10 +124,10 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
 		int index = chatRoomList.indexOf(conversation);
 		if (index != -1) {
-			Log.i("updatwConvInAdapter", conversation.chatRoomObject.conversationID);
+			Log.i("updateConvInAdapter", conversation.getConversationID());
 			chatRoomList.set(index, conversation);
 		} else {
-			Log.i("addConvToAdapter", conversation.chatRoomObject.conversationID);
+			Log.i("addConvToAdapter", conversation.getConversationID());
 			chatRoomList.add(conversation);
 		}
 		notifyDataSetChanged();

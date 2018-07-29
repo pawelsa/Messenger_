@@ -6,7 +6,7 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-import static com.google.firebase.udacity.friendlychat.Managers.FragmentsManager.goBack;
+import static com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager.goBack;
 
 
 public class LeftToRightDetector {

@@ -1,15 +1,17 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.Messages;
 
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -28,24 +30,28 @@ import android.widget.ImageView;
 import android.widget.Scroller;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
-import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
-import com.google.firebase.udacity.friendlychat.Managers.LastSeenTime;
+import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.LastSeenTime;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
+import com.google.firebase.udacity.friendlychat.Managers.Database.MessageReceiver;
+import com.google.firebase.udacity.friendlychat.Managers.Database.MessageSender;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
 import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 
 import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.SingleOnSubscribe;
+import io.reactivex.disposables.Disposable;
 
-import static com.google.firebase.udacity.friendlychat.Managers.UserManager.getCurrentUserID;
+import static android.app.Activity.RESULT_OK;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.UserManager.getCurrentUserID;
 
 
-public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnConversationListener, com.google.firebase.udacity.friendlychat.Managers.UserManager.OnUserDownloadListener*/ {
+public class MessagesFragment extends Fragment {
 
 	private static final int RC_PHOTO_PICKER = 2;
 	public static final int DEFAULT_MSG_LENGTH_LIMIT = 1000;
@@ -53,19 +59,19 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 	public static final String DISPLAY_NAME = "displayName";
 	public static final String CONVERSATIONALIST_PSEUDONYM = "conversationalist_pseudonym";
 
-	public static final MessagesFragment ourInstance = new MessagesFragment();
-
-	private ImageButton mPhotoPickerButton;
-	private EditText mMessageEditText;
-	private ImageView mSendButton;
+	private ImageButton photoPickerButton;
+	private EditText messageEditText;
+	private ImageView sendButton;
 	private Toolbar toolbar;
 	private ActionBar actionBar;
+	private RecyclerView recyclerView;
 
 	private ChatRoom chatRoom;
 
-	public static MessagesFragment getInstance() {
-		return ourInstance;
-	}
+	private MessagesAdapter adapter;
+
+	private Disposable messageReceiver;
+	private Disposable downloadingChatRooms;
 
 
 	@Override
@@ -73,34 +79,71 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 		super.onActivityCreated(savedInstanceState);
 		setHasOptionsMenu(true);
 		View item = getActivity().findViewById(R.id.allInfo);
-		if (item != null) item.setVisibility(View.INVISIBLE);
-		getConversationIdAndSetupActionBar();
+		if (item != null)
+			item.setVisibility(View.INVISIBLE);
+
+		adapter = new MessagesAdapter(getContext());
+
+		Bundle bundle = getArguments();
+		if (bundle != null) {
+			String conversationID = bundle.getString(CONVERSATION_ID);
+			startWatchingChatRoom(conversationID);
+
+			String conversationName = bundle.getString(DISPLAY_NAME);
+			setupActionBar(conversationName);
+		}
 
 		initializeReferencesToViews();
 		settingUpUIFunctionality();
 	}
 
-	@SuppressLint("CheckResult")
-	private void getConversationIdAndSetupActionBar() {
+	private void startWatchingChatRoom(String conversationID) {
 
-		Bundle bundle = getArguments();
-		if (bundle != null) {
-			String conversationID = bundle.getString(CONVERSATION_ID);
-			String conversationName = bundle.getString(DISPLAY_NAME);
-			setupActionBar(conversationName);
+		downloadingChatRooms = ManageDownloadingChatRooms.downloadChatRoom(conversationID)
+				.subscribe(downloadedChatRoom -> {
+					chatRoom = downloadedChatRoom;
+					adapter.updateChatRoom(chatRoom);
+					startWatchingMessages(chatRoom.getConversationID());
+					setupToolbar();
+				});
+	}
 
-			ManageDownloadingChatRooms.downloadChatRoom(conversationID)
-					.subscribe(downloadedChatRoom -> {
-						chatRoom = downloadedChatRoom;
-						changeBarColors();
-						if (toolbar != null) {
-							setTitle();
-							setUserAvatarInActionBar();
-							setUserOnlineStatusInActionBar();
-						}
-					});
+	private void startWatchingMessages(String conversationID) {
 
+		if ((messageReceiver != null && messageReceiver.isDisposed()) || messageReceiver == null)
 
+			messageReceiver = MessageReceiver.getMessage(conversationID)
+					.subscribe(message -> {
+								adapter.addMessage(message);
+								recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+							},
+							Throwable::printStackTrace,
+							() -> Log.i("Watching Messages", "Completed"));
+
+	}
+
+	private void setupToolbar() {
+
+		if (toolbar != null) {
+			changeBarColors();
+			setTitle();
+			setUserAvatarInActionBar();
+			setUserOnlineStatusInActionBar();
+		}
+	}
+
+	private void changeBarColors() {
+		int color = chatRoom.chatRoomObject.chatColor;
+		if (actionBar != null) {
+
+			ColorDrawable actionBarColor = ColorManager.getActionBarColor(color);
+			actionBar.setBackgroundDrawable(actionBarColor);
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+				int statusBarColor = ColorManager.getStatusBarColor(color);
+				if (statusBarColor != -1)
+					getActivity().getWindow().setStatusBarColor(statusBarColor);
+			}
 		}
 	}
 
@@ -139,24 +182,23 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 
 	private void initializeReferencesToViews() {
 
-		mPhotoPickerButton = getActivity().findViewById(R.id.photoPickerButton);
-		mMessageEditText = getActivity().findViewById(R.id.messageEditText);
-		mSendButton = getActivity().findViewById(R.id.sendButton);
+		photoPickerButton = getActivity().findViewById(R.id.photo_picker_button);
+		messageEditText = getActivity().findViewById(R.id.message_edit_text);
+		sendButton = getActivity().findViewById(R.id.send_button);
+		recyclerView = getActivity().findViewById(R.id.messages_recycler_view);
 	}
 
 	private void settingUpUIFunctionality() {
-
 		photoPickerButtonFunctionality();
-
 		messageEditTextFunctionality();
-
 		sendButtonFunctionality();
+		recyclerViewFunctionality();
 	}
 
 
 	private void photoPickerButtonFunctionality() {
 
-		mPhotoPickerButton.setOnClickListener(view -> {
+		photoPickerButton.setOnClickListener(view -> {
 
 			Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 			intent.setType("image/jpeg");
@@ -167,11 +209,11 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 
 	private void messageEditTextFunctionality() {
 
-		mMessageEditText.setScroller(new Scroller(getContext()));
-		mMessageEditText.setMaxLines(2);
-		mMessageEditText.setVerticalScrollBarEnabled(true);
+		messageEditText.setScroller(new Scroller(getContext()));
+		messageEditText.setMaxLines(2);
+		messageEditText.setVerticalScrollBarEnabled(true);
 
-		mMessageEditText.addTextChangedListener(new TextWatcher() {
+		messageEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 			}
@@ -179,9 +221,9 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 			@Override
 			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 				if (charSequence.toString().trim().length() > 0) {
-					mSendButton.setEnabled(true);
+					sendButton.setEnabled(true);
 				} else {
-					mSendButton.setEnabled(false);
+					sendButton.setEnabled(false);
 				}
 			}
 
@@ -189,22 +231,34 @@ public class MessagesFragment extends Fragment /*implements ChatRoomListener.OnC
 			public void afterTextChanged(Editable editable) {
 			}
 		});
-		mMessageEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(DEFAULT_MSG_LENGTH_LIMIT)});
+		messageEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(DEFAULT_MSG_LENGTH_LIMIT)});
 	}
 
 	private void sendButtonFunctionality() {
 
-		mSendButton.setOnClickListener(view -> {
-/*
-			FriendlyMessage newMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+		sendButton.setOnClickListener(view -> {
+			String messageText = messageEditText.getText().toString().trim();
 
-if (newMessage.getText().trim().length() > 0) {
+			if (messageText.length() > 0 && messageText.length() < 1000) {
+				MessageSender.sendMessage(messageText, chatRoom.getConversationID());
+				messageEditText.setText("");
+			}
 
-// mDatabaseReference.push().setValue(newMessage);
-// Clear input box
-mMessageEditText.setText("");
-}*/
+		});
+	}
 
+	private void recyclerViewFunctionality() {
+		LinearLayoutManager llm = new LinearLayoutManager(getContext());
+		llm.setOrientation(LinearLayoutManager.VERTICAL);
+		recyclerView.setLayoutManager(llm);
+		recyclerView.setAdapter(adapter);
+		recyclerView.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+			int y = oldBottom - bottom;
+			if (Math.abs(y) > 0) {
+				recyclerView.post(() ->
+						recyclerView.scrollToPosition(adapter.getItemCount() - 1)
+				);
+			}
 		});
 	}
 
@@ -230,13 +284,22 @@ mMessageEditText.setText("");
 		if (chatRoom != null && chatRoom.conversationalist != null) {
 			setUserOnlineStatusInActionBar();
 		}
+		String conversationID = chatRoom == null ? getArguments().getString(CONVERSATION_ID) : chatRoom.getConversationID();
+		startWatchingChatRoom(conversationID);
+
+		Log.i("State", "OnResume " + Integer.toString(adapter.getItemCount()));
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
 
-		Log.i("State", "OnPause");
+		if (downloadingChatRooms != null && !downloadingChatRooms.isDisposed())
+			downloadingChatRooms.dispose();
+
+		if (messageReceiver != null && !messageReceiver.isDisposed())
+			messageReceiver.dispose();
+		Log.i("State", "OnPause " + Integer.toString(adapter.getItemCount()));
 	}
 
 	@Override
@@ -247,25 +310,21 @@ mMessageEditText.setText("");
 			chatRoom.chatRoomObject = null;
 			chatRoom = null;
 		}
+		if (downloadingChatRooms != null && !downloadingChatRooms.isDisposed())
+			downloadingChatRooms.dispose();
+
+		if (messageReceiver != null && !messageReceiver.isDisposed())
+			messageReceiver.dispose();
 		Log.i("State", "OnDestroy");
 	}
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-
-/*        if (requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
+		if (requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
 			Uri photoUri = data.getData();
-            final StorageReference photoReference = storagePhotosReference.child(photoUri.getLastPathSegment());
-
-            photoReference.putFile(photoUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    FriendlyMessage friendlyMessageWithPhoto = new FriendlyMessage(null, mUsername, taskSnapshot.getDownloadUrl().toString());
-                    mDatabaseReference.push().setValue(friendlyMessageWithPhoto);
-                }
-            });
-        }*/
+			MessageSender.sendPhoto(photoUri, chatRoom.getConversationID());
+		}
 	}
 
 	@Override
@@ -285,10 +344,11 @@ mMessageEditText.setText("");
 			case R.id.allInfo: {
 				if (doesChatRoomExists()) {
 					Bundle bundle = chatRoom.conversationalist.get(0).getSettingsBundle();
-					bundle.putString(CONVERSATION_ID, chatRoom.chatRoomObject.conversationID);
+					bundle.putString(CONVERSATION_ID, chatRoom.getConversationID());
 					bundle.putString(CONVERSATIONALIST_PSEUDONYM, chatRoom.chatRoomObject.conversationName);
 
-					FragmentsManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
+					FragmentsManager fragmentManager = FragmentsManager.getInstance();
+					fragmentManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
 				}
 			}
 			default:
@@ -297,46 +357,21 @@ mMessageEditText.setText("");
 	}
 
 	private boolean doesChatRoomExists() {
-		return chatRoom != null && chatRoom.chatRoomObject.conversationID != null && chatRoom.chatRoomObject.conversationName != null;
-	}
-
-	private void changeBarColors() {
-		int color = chatRoom.chatRoomObject.chatColor;
-		if (toolbar != null && actionBar != null) {
-
-			ColorDrawable actionBarColor = ActionBarManager.getActionBarColor(color);
-			actionBar.setBackgroundDrawable(actionBarColor);
-
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-				int statusBarColor = ActionBarManager.getStatusBarColor(color);
-				if (statusBarColor != -1)
-					getActivity().getWindow().setStatusBarColor(statusBarColor);
-			}
-		}
+		return chatRoom != null && chatRoom.getConversationID() != null && chatRoom.chatRoomObject.conversationName != null;
 	}
 
 
 	private void setUserAvatarInActionBar() {
 
-/*        Glide.with(getContext()).load(chatRoom.conversationalist.avatarUri).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(new SimpleTarget<Drawable>() {
-			@Override
-            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-
-                Bitmap bitmap1 = ((BitmapDrawable) resource).getBitmap();
-
-                Drawable drawable = new BitmapDrawable(getResources(), bitmap1);
-                toolbar.setIcon(drawable);
-            }
-        });*/
-		//toolbar.setIcon(R.drawable.avatar);
 	}
 
 	void setUserOnlineStatusInActionBar() {
 		String onlineStatusMessage = "";
 
 		if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
-			onlineStatusMessage = getResources().getString(R.string.now_online);
 			onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
+		} else if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty()) {
+			onlineStatusMessage = getResources().getString(R.string.now_online);
 		}
 		((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle(onlineStatusMessage);
 	}

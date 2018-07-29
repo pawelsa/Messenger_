@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.SearchForUser;
+package com.google.firebase.udacity.friendlychat.Managers.Database;
 
 import android.util.Log;
 
@@ -6,7 +6,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.udacity.friendlychat.FirebaseWrapper.RxChildEventListener;
 import com.google.firebase.udacity.friendlychat.FirebaseWrapper.RxValueEventListener;
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoomObject;
 import com.google.firebase.udacity.friendlychat.Objects.User;
@@ -18,8 +17,8 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
-import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.CHAT_ROOM;
-import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.USER_CONVERSATIONS;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest.CHAT_ROOM;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest.USER_CONVERSATIONS;
 
 public class ManageDownloadingChatRooms {
 
@@ -44,7 +43,7 @@ public class ManageDownloadingChatRooms {
 
 	private static Observable<List<User>> getListsOfUsersForEachChatRoom() {
 		return getChatRoomObjectFlowable()
-				.concatMap(chatRoomObject -> getListOfUsersFor(chatRoomObject));
+				.concatMap(ManageDownloadingChatRooms::getListOfUsersFor);
 	}
 
 	private static Observable<List<User>> getListOfUsersFor(ChatRoomObject chatRoomObject) {
@@ -65,7 +64,7 @@ public class ManageDownloadingChatRooms {
 				.toObservable();
 
 		Observable<List<User>> chatRoomUsersList = chatRoomObjectObservable
-				.flatMap(chatRoomObject -> getListOfUsersFor(chatRoomObject));
+				.flatMap(ManageDownloadingChatRooms::getListOfUsersFor);
 
 		return Observable.zip(chatRoomObjectObservable, chatRoomUsersList, (t1, t2) -> new ChatRoom(t2, t1))
 				.observeOn(AndroidSchedulers.mainThread());

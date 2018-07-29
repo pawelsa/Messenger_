@@ -21,6 +21,10 @@
     <string name="plural">s</string>
     <string name="ago">\ ago</string>
 
+    <string name="send">Send</string>
+    <string name="browse_photos">Browse photos</string>
+    <string name="enter_text">Enter text to send</string>
+
     <string name="couldnt_login">Couldn\'t login</string>
     <string name="avatar_picture">Avatar picture</string>
 

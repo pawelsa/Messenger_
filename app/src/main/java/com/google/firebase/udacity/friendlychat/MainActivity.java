@@ -10,19 +10,19 @@ import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
-import com.google.firebase.udacity.friendlychat.Managers.UserOnlineStatus;
-import com.google.firebase.udacity.friendlychat.NetworkCheck.NetworkCheckReceiver;
-import com.google.firebase.udacity.friendlychat.NetworkCheck.ObserveInternet;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserOnlineStatus;
+import com.google.firebase.udacity.friendlychat.Managers.NetworkCheck.NetworkCheckReceiver;
 
-import java.util.Observable;
-import java.util.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
 
-public class MainActivity extends AppCompatActivity implements Observer, UserOnlineStatus.UserOnlineStatusListener {
+public class MainActivity extends AppCompatActivity implements UserOnlineStatus.UserOnlineStatusListener {
 
 	IntentFilter intentFilter;
 	UserOnlineStatus userOnlineStatus;
-	private NetworkCheckReceiver networkCheckReceiver;
+
+	private Disposable networkCheck;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +32,27 @@ public class MainActivity extends AppCompatActivity implements Observer, UserOnl
 		Log.i("State", "onCreate");
 		intentFilter = new IntentFilter();
 		intentFilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-		networkCheckReceiver = new NetworkCheckReceiver();
 
 		userOnlineStatus = UserOnlineStatus.getInstance();
 		userOnlineStatus.setupUserOnlineStatus(this, this);
+		startNetworkCheck();
+	}
 
-		ObserveInternet.getInstance().addObserver(this);
+	private void startNetworkCheck() {
+
+		if (networkCheck == null || networkCheck.isDisposed())
+			networkCheck = NetworkCheckReceiver.connectivityChanges(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))
+					.observeOn(AndroidSchedulers.mainThread())
+					.subscribe(connection -> {
+						Log.i("Network connection New", connection.toString());
+						RelativeLayout internetStatus = findViewById(R.id.internetStatus);
+						internetStatus.setVisibility(!connection ? View.VISIBLE : View.GONE);
+						if (connection) {
+							userOnlineStatus.authorizationSetup();
+							userOnlineStatus.onResume();
+						} else
+							userOnlineStatus.onPause();
+					});
 	}
 
 	@Override
@@ -45,12 +60,21 @@ public class MainActivity extends AppCompatActivity implements Observer, UserOnl
 		super.onPause();
 		Log.i("State", "pause");
 		userOnlineStatus.onPause();
-		unregisterReceiver(networkCheckReceiver);
+
+		if (networkCheck != null && !networkCheck.isDisposed()) {
+			Log.i("Network connection New", "disposed");
+			networkCheck.dispose();
+		}
+
 	}
 
 	@Override
 	protected void onStop() {
 		super.onStop();
+		if (networkCheck != null && !networkCheck.isDisposed()) {
+			Log.i("Network connection New", "disposed");
+			networkCheck.dispose();
+		}
 		Log.i("State", "stop");
 	}
 
@@ -60,9 +84,13 @@ public class MainActivity extends AppCompatActivity implements Observer, UserOnl
 
 		Log.i("State", "destroy");
 		userOnlineStatus.onDestroy();
-		unregisterReceiver(networkCheckReceiver);
 
-		FragmentsManager.destroy(this);
+		if (networkCheck != null && !networkCheck.isDisposed()) {
+			Log.i("Network connection New", "disposed");
+			networkCheck.dispose();
+		}
+
+		//FragmentsManager.destroy(this);
 	}
 
 	@Override
@@ -71,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements Observer, UserOnl
 
 		Log.i("State", "onResume");
 		userOnlineStatus.onResume();
-		registerReceiver(networkCheckReceiver, intentFilter);
+		startNetworkCheck();
 	}
 
 	@Override
@@ -84,20 +112,7 @@ public class MainActivity extends AppCompatActivity implements Observer, UserOnl
 	public void userLoggedIn() {
 
 		Log.i("State", "userLoggedIn");
-		FragmentsManager.startBaseFragment(this);
-	}
-
-	@Override
-	public void update(Observable observable, Object o) {
-
-		Log.i("onReceive", "internet " + Boolean.toString((boolean) o));
-		RelativeLayout internetStatus = findViewById(R.id.internetStatus);
-		boolean isNetworkAvailable = (boolean) o;
-		if (!isNetworkAvailable) {
-			internetStatus.setVisibility(View.VISIBLE);
-		} else {
-			internetStatus.setVisibility(View.GONE);
-		}
-
+		FragmentsManager fragmentManager = FragmentsManager.getInstance();
+		fragmentManager.startBaseFragment(this);
 	}
 }

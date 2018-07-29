@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".NetworkCheck.NetworkCheckReceiver">
+        <receiver android:name=".Managers.NetworkCheck.NetworkCheckReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>

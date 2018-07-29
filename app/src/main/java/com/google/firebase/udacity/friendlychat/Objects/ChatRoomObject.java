@@ -1,6 +1,6 @@
 package com.google.firebase.udacity.friendlychat.Objects;
 
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
 
 import java.util.HashMap;
 import java.util.Map;

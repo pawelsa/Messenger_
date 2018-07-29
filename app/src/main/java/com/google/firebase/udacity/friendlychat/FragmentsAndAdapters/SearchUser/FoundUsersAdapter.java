@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.SearchForUser;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.SearchUser;
 
 import android.content.Context;
 import android.support.constraint.ConstraintLayout;
@@ -14,7 +14,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest;
 import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.R;
 
@@ -26,7 +27,7 @@ public class FoundUsersAdapter extends RecyclerView.Adapter<FoundUsersAdapter.Fo
 	private List<User> users;
 	private Context context;
 
-	public FoundUsersAdapter(Context context) {
+	FoundUsersAdapter(Context context) {
 		users = new ArrayList<>();
 		this.context = context;
 	}
@@ -41,36 +42,7 @@ public class FoundUsersAdapter extends RecyclerView.Adapter<FoundUsersAdapter.Fo
 	@Override
 	public void onBindViewHolder(final FoundUserViewHolder holder, final int position) {
 
-		setText(holder, position);
-
-		String contactAvatar = "http://digitalspyuk.cdnds.net/17/25/980x490/landscape-1498216547-avatar-neytiri.jpg";
-		String checkAvatar = users.get(position).avatarUri;
-
-		if (checkAvatar != null && !checkAvatar.equals("null"))
-			contactAvatar = checkAvatar;
-
-		Glide.with(context).load(contactAvatar).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(holder.userAvatarImageView);
-
-		onLayoutClick(holder, position);
-	}
-
-	private void setText(final FoundUserViewHolder holder, final int position) {
-
-		holder.userNameTextView.setText(users.get(position).User_Name);
-	}
-
-	private void onLayoutClick(final FoundUserViewHolder holder, final int position) {
-
-		holder.userItemLayout.setOnClickListener(v -> {
-
-			ConversationRequest.checkIfConversationExists(users.get(position).User_ID, context)
-					.subscribe(key -> {
-								FragmentsManager.startMessageFragment((AppCompatActivity) context, key);
-								Log.i("Conv ID", key);
-							},
-							Throwable::printStackTrace,
-							() -> Log.i("User and conv search", "complete"));
-		});
+		holder.bind(users.get(position));
 	}
 
 	@Override
@@ -80,7 +52,7 @@ public class FoundUsersAdapter extends RecyclerView.Adapter<FoundUsersAdapter.Fo
 
 	public void pushUser(User user) {
 		users.add(user);
-		notifyDataSetChanged();
+		notifyItemInserted(users.size() - 1);
 	}
 
 	public void clear() {
@@ -99,6 +71,39 @@ public class FoundUsersAdapter extends RecyclerView.Adapter<FoundUsersAdapter.Fo
 			userNameTextView = view.findViewById(R.id.username);
 			userAvatarImageView = view.findViewById(R.id.avatar);
 			userItemLayout = view.findViewById(R.id.user_item_layout);
+		}
+
+		void bind(User user) {
+			setText(user);
+
+			String contactAvatar = "http://digitalspyuk.cdnds.net/17/25/980x490/landscape-1498216547-avatar-neytiri.jpg";
+			String checkAvatar = user.avatarUri;
+
+			if (checkAvatar != null && !checkAvatar.equals("null"))
+				contactAvatar = checkAvatar;
+
+			Glide.with(context).load(contactAvatar).apply(RequestOptions.bitmapTransform(new CircleCrop())).into(userAvatarImageView);
+
+			onLayoutClick(user);
+		}
+
+		private void setText(User user) {
+			userNameTextView.setText(user.User_Name);
+		}
+
+		private void onLayoutClick(User user) {
+
+			userItemLayout.setOnClickListener(v ->
+
+					ConversationRequest.checkIfConversationExists(user.User_ID, context)
+							.subscribe(key -> {
+										FragmentsManager fragmentManager = FragmentsManager.getInstance();
+										fragmentManager.startMessageFragment((AppCompatActivity) context, key);
+										Log.i("Conv ID", key);
+									},
+									Throwable::printStackTrace,
+									() -> Log.i("User and conv search", "complete"))
+			);
 		}
 	}
 }

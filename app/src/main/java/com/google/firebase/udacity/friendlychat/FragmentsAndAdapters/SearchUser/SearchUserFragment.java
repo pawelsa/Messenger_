@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.SearchUser;
 
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -21,11 +21,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
-import com.google.firebase.udacity.friendlychat.Managers.ActionBarManager;
-import com.google.firebase.udacity.friendlychat.Managers.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.SearchForUser;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.FoundUsersAdapter;
-import com.google.firebase.udacity.friendlychat.SearchForUser.SearchForUser;
 import com.jakewharton.rxbinding2.support.v7.widget.RxSearchView;
 
 import io.reactivex.disposables.Disposable;
@@ -35,8 +34,9 @@ public class SearchUserFragment extends Fragment {
 	private FoundUsersAdapter adapter;
 	private RecyclerView recyclerView;
 	private SearchView searchView;
+
 	private Disposable editTextDisposable;
-	private SearchForUser searchForUser;
+	private Disposable searchForUser;
 
 	@Nullable
 	@Override
@@ -69,7 +69,7 @@ public class SearchUserFragment extends Fragment {
 		actionBar.setTitle(null);
 		actionBar.setSubtitle(null);
 		actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
-		int statusBarColor = ActionBarManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+		int statusBarColor = ColorManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
 		if (statusBarColor != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 			getActivity().getWindow().setStatusBarColor(statusBarColor);
 	}
@@ -81,7 +81,6 @@ public class SearchUserFragment extends Fragment {
 		recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 		adapter = new FoundUsersAdapter(getContext());
 		recyclerView.setAdapter(adapter);
-		searchForUser = new SearchForUser(adapter);
 
 		observeEditText();
 	}
@@ -94,7 +93,10 @@ public class SearchUserFragment extends Fragment {
 				.map(String::valueOf)
 				.subscribe(query -> {
 					adapter.clear();
-					searchForUser.searchUserByName(query);
+
+					if (!query.equals(""))
+						searchForUser = SearchForUser.searchUserByName(query)
+								.subscribe(user -> adapter.pushUser(user));
 				});
 	}
 
@@ -111,6 +113,20 @@ public class SearchUserFragment extends Fragment {
 
 		if (editTextDisposable != null && !editTextDisposable.isDisposed())
 			editTextDisposable.dispose();
+
+		if (searchForUser != null && !searchForUser.isDisposed())
+			searchForUser.dispose();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		if (editTextDisposable != null && !editTextDisposable.isDisposed())
+			editTextDisposable.dispose();
+
+		if (searchForUser != null && !searchForUser.isDisposed())
+			searchForUser.dispose();
 	}
 
 	@Override

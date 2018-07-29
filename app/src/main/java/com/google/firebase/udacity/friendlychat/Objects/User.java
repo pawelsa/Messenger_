@@ -64,4 +64,10 @@ public class User {
 		}
 		return result;
 	}
+
+	@Override
+	public int hashCode() {
+
+		return User_ID.hashCode();
+	}
 }

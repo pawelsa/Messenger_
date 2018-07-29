@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.SearchForUser;
+package com.google.firebase.udacity.friendlychat.Managers.Database;
 
 import android.content.Context;
 import android.widget.Toast;
@@ -8,7 +8,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.udacity.friendlychat.FirebaseWrapper.RxChildEventListener;
 import com.google.firebase.udacity.friendlychat.FirebaseWrapper.RxSingleEventListener;
-import com.google.firebase.udacity.friendlychat.Managers.UserManager;
 
 import java.util.HashMap;
 import java.util.Map;

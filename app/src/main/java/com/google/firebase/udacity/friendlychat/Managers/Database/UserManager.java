@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Managers;
+package com.google.firebase.udacity.friendlychat.Managers.Database;
 
 import android.net.Uri;
 
@@ -10,8 +10,8 @@ import com.google.firebase.udacity.friendlychat.Objects.User;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.CHAT_ROOM;
-import static com.google.firebase.udacity.friendlychat.SearchForUser.ConversationRequest.PARTICIPANTS;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest.CHAT_ROOM;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest.PARTICIPANTS;
 
 
 public class UserManager {

@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Fragments;
+package com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.PseudonymBottomSheet;
 
 import android.app.Dialog;
 import android.os.Bundle;
@@ -8,11 +8,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import com.google.firebase.udacity.friendlychat.PseudonymRecyclerViewAdapter;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.ManageDownloadingChatRooms;
 
-import static com.google.firebase.udacity.friendlychat.Fragments.MessagesFragment.CONVERSATION_ID;
+import io.reactivex.disposables.Disposable;
+
+import static com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.Messages.MessagesFragment.CONVERSATION_ID;
 
 public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 
@@ -20,6 +21,8 @@ public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 	private PseudonymRecyclerViewAdapter adapter;
 
 	private String conversationID;
+
+	private Disposable downloadChatRoom;
 
 	public PseudonymBottomSheet() {
 	}
@@ -51,8 +54,43 @@ public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 		}
 
 
-		ManageDownloadingChatRooms.downloadChatRoom(conversationID)
+		downloadChatRoom = startDownloadingChatRoom();
+	}
+
+	private Disposable startDownloadingChatRoom() {
+		return ManageDownloadingChatRooms.downloadChatRoom(conversationID)
 				.filter(downloadedChatRoom -> downloadedChatRoom.conversationalist.size() + 1 == downloadedChatRoom.chatRoomObject.participants.size())
 				.subscribe(downloadedChatRoom -> adapter.add(downloadedChatRoom));
+	}
+
+
+	@Override
+	public void onResume() {
+		super.onResume();
+
+		if (downloadChatRoom.isDisposed())
+			startDownloadingChatRoom();
+
+		adapter.onResume();
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+
+		if (downloadChatRoom != null && !downloadChatRoom.isDisposed())
+			downloadChatRoom.dispose();
+
+		adapter.onPauseAndonDestroy();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		if (downloadChatRoom != null && !downloadChatRoom.isDisposed())
+			downloadChatRoom.dispose();
+
+		adapter.onPauseAndonDestroy();
 	}
 }

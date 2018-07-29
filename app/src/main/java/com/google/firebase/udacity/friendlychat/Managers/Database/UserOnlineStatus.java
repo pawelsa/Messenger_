@@ -1,4 +1,4 @@
-package com.google.firebase.udacity.friendlychat.Managers;
+package com.google.firebase.udacity.friendlychat.Managers.Database;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -12,20 +12,22 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Objects.User;
 import com.google.firebase.udacity.friendlychat.R;
-import com.google.firebase.udacity.friendlychat.SearchForUser.SearchForUser;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.reactivex.disposables.Disposable;
+
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static com.google.firebase.udacity.friendlychat.Managers.UserManager.USERS;
+import static com.google.firebase.udacity.friendlychat.Managers.Database.UserManager.USERS;
 
 
-public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ {
+public class UserOnlineStatus {
 
 	private static final UserOnlineStatus ourInstance = new UserOnlineStatus();
 
@@ -49,6 +51,8 @@ public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ 
 	private User currentUser;
 	private String currentUserID;
 
+	private Disposable downloadCurrentUser;
+
 
 	private UserOnlineStatus() {
 	}
@@ -56,14 +60,15 @@ public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ 
 	public void setupUserOnlineStatus(Activity activity, UserOnlineStatusListener userOnlineStatusListener) {
 		mainActivity = activity;
 		this.userOnlineStatusListener = userOnlineStatusListener;
-		authorizationSetup();
+		//authorizationSetup();
 	}
 
-	private void authorizationSetup() {
-
-		firebaseAuth = FirebaseAuth.getInstance();
-		authStateListener = newAuthStateListener();
-		firebaseAuth.addAuthStateListener(authStateListener);
+	public void authorizationSetup() {
+		if (firebaseAuth == null && authStateListener == null) {
+			firebaseAuth = FirebaseAuth.getInstance();
+			authStateListener = newAuthStateListener();
+			firebaseAuth.addAuthStateListener(authStateListener);
+		}
 	}
 
 	private FirebaseAuth.AuthStateListener newAuthStateListener() {
@@ -109,29 +114,30 @@ public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ 
 
 	}
 
-
 	private void setupUserManager() {
 
 		currentUserID = getUserIDFromFirebaseAuth();
-		getCurrentUserFromServer();
+		downloadCurrentUser = getCurrentUserFromServer();
 	}
 
-	private void getCurrentUserFromServer() {
+	private Disposable getCurrentUserFromServer() {
 
-		SearchForUser.searchUserByID(currentUserID)
+		return SearchForUser.searchUserByID(currentUserID)
 				.subscribe(user -> {
-					currentUser = user;
-					UserManager.setCurrentUser(user);
-					userOnlineStatusListener.userLoggedIn();
-					Log.i("Current user", "downloaded " + currentUser.isOnline);
-				}, Throwable::printStackTrace, () -> {
-					if (currentUser == null) {
-						Log.i("Current user", "not downloaded");
-						createNewUserAndPush();
-					} else {
-						Log.i("Current user", "downloaded " + currentUser.isOnline);
-					}
-				});
+							currentUser = user;
+							UserManager.setCurrentUser(user);
+							userOnlineStatusListener.userLoggedIn();
+							Log.i("Current user", "Downloaded");
+						},
+						Throwable::printStackTrace,
+						() -> {
+							if (currentUser == null) {
+								Log.i("Current user", "Not downloaded");
+								createNewUserAndPush();
+							} else {
+								Log.i("Current user", "Downloaded");
+							}
+						});
 	}
 
 	private void createNewUserAndPush() {
@@ -168,9 +174,12 @@ public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ 
 	public void onResume() {
 		changeUserOnlineStatus(true);
 		//firebaseAuth.addAuthStateListener(authStateListener);
+		if (currentUser == null && downloadCurrentUser != null && downloadCurrentUser.isDisposed()) {
+			downloadCurrentUser = getCurrentUserFromServer();
+		}
 	}
 
-	void changeUserOnlineStatus(boolean isOnline) {
+	private void changeUserOnlineStatus(boolean isOnline) {
 
 		if (currentUser != null) {
 			Map<String, Object> timestamp = new HashMap<>();
@@ -189,6 +198,10 @@ public class UserOnlineStatus/* implements UserManager.OnUserDownloadListener*/ 
 		onPause();
 		authStateListener = null;
 		firebaseAuth = null;
+
+		if (downloadCurrentUser != null && !downloadCurrentUser.isDisposed()) {
+			downloadCurrentUser.dispose();
+		}
 	}
 
 	public interface UserOnlineStatusListener {
