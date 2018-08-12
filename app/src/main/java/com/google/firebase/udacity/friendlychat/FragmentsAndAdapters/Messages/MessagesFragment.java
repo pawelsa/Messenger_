@@ -32,7 +32,7 @@ import android.widget.Scroller;
 import com.google.firebase.udacity.friendlychat.Gestures.LeftToRightDetector;
 import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
 import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
-import com.google.firebase.udacity.friendlychat.Managers.App.LastSeenTime;
+import com.google.firebase.udacity.friendlychat.Managers.App.TimeConverter;
 import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
 import com.google.firebase.udacity.friendlychat.Managers.Database.MessageReceiver;
 import com.google.firebase.udacity.friendlychat.Managers.Database.MessageSender;
@@ -250,6 +250,7 @@ public class MessagesFragment extends Fragment {
 	private void recyclerViewFunctionality() {
 		LinearLayoutManager llm = new LinearLayoutManager(getContext());
 		llm.setOrientation(LinearLayoutManager.VERTICAL);
+		llm.setStackFromEnd(true);
 		recyclerView.setLayoutManager(llm);
 		recyclerView.setAdapter(adapter);
 		recyclerView.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
@@ -347,8 +348,7 @@ public class MessagesFragment extends Fragment {
 					bundle.putString(CONVERSATION_ID, chatRoom.getConversationID());
 					bundle.putString(CONVERSATIONALIST_PSEUDONYM, chatRoom.chatRoomObject.conversationName);
 
-					FragmentsManager fragmentManager = FragmentsManager.getInstance();
-					fragmentManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
+					FragmentsManager.startConversationInfoFragment((AppCompatActivity) getActivity(), bundle);
 				}
 			}
 			default:
@@ -369,7 +369,7 @@ public class MessagesFragment extends Fragment {
 		String onlineStatusMessage = "";
 
 		if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty() && !chatRoom.conversationalist.get(0).isOnline) {
-			onlineStatusMessage = LastSeenTime.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
+			onlineStatusMessage = TimeConverter.getLastSeenOnlineStatusMessage(getLastOnlineTimestamp(chatRoom.conversationalist.get(0)), getResources());
 		} else if (chatRoom.chatRoomObject.participants.size() < 3 && !chatRoom.conversationalist.isEmpty()) {
 			onlineStatusMessage = getResources().getString(R.string.now_online);
 		}

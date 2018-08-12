@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
+
     <ImageView
         android:id="@+id/image_message_profile"
         android:layout_width="40dp"
@@ -11,7 +12,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="4dp"
         android:layout_marginLeft="8dp"
         android:layout_marginStart="8dp"
         android:background="@color/colorAccent"
@@ -25,22 +26,27 @@
         android:id="@+id/text_message_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
         android:textSize="12sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/relativeLayout_receivedMessage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 
     <RelativeLayout
         android:id="@+id/relativeLayout_receivedMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_toEndOf="@+id/image_message_profile"
-        android:layout_toRightOf="@+id/image_message_profile"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/image_message_profile"
         app:layout_constraintStart_toEndOf="@+id/image_message_profile">
 
@@ -48,40 +54,39 @@
             android:id="@+id/text_message_body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginLeft="8dp"
-            android:layout_marginStart="8dp"
             android:background="@drawable/message_rectangle"
             android:maxWidth="240dp"
-            android:padding="8dp"
-            android:textColor="#ffffff" />
+            android:padding="10dp"
+            android:text="@string/message"
+            android:textColor="#ffffff"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ImageView
             android:id="@+id/image_message_body"
             android:layout_width="240dp"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginLeft="8dp"
-            android:layout_marginStart="8dp"
             android:maxWidth="240dp"
             android:padding="8dp"
+            android:text="@string/message"
             android:textColor="#ffffff"
-            android:visibility="gone" />
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
     </RelativeLayout>
+
     <TextView
         android:id="@+id/text_message_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/relativeLayout_receivedMessage"
-        android:layout_alignRight="@+id/relativeLayout_receivedMessage"
-        android:layout_alignTop="@+id/text_message_name"
+        android:layout_marginBottom="4dp"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
-        android:textSize="10sp"
+        android:textSize="12sp"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/text_message_name"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 </android.support.constraint.ConstraintLayout>

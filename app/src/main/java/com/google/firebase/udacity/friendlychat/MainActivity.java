@@ -12,7 +12,7 @@ import android.widget.RelativeLayout;
 
 import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
 import com.google.firebase.udacity.friendlychat.Managers.Database.UserOnlineStatus;
-import com.google.firebase.udacity.friendlychat.Managers.NetworkCheck.NetworkCheckReceiver;
+import com.google.firebase.udacity.friendlychat.Managers.NetworkCheck.NetworkCheck;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -41,14 +41,14 @@ public class MainActivity extends AppCompatActivity implements UserOnlineStatus.
 	private void startNetworkCheck() {
 
 		if (networkCheck == null || networkCheck.isDisposed())
-			networkCheck = NetworkCheckReceiver.connectivityChanges(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))
+			networkCheck = NetworkCheck.connectivityChanges(this, (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))
 					.observeOn(AndroidSchedulers.mainThread())
 					.subscribe(connection -> {
-						Log.i("Network connection New", connection.toString());
+						Log.i("Network connection", connection.toString());
 						RelativeLayout internetStatus = findViewById(R.id.internetStatus);
 						internetStatus.setVisibility(!connection ? View.VISIBLE : View.GONE);
 						if (connection) {
-							userOnlineStatus.authorizationSetup();
+							userOnlineStatus.startAuthentication();
 							userOnlineStatus.onResume();
 						} else
 							userOnlineStatus.onPause();
@@ -112,7 +112,6 @@ public class MainActivity extends AppCompatActivity implements UserOnlineStatus.
 	public void userLoggedIn() {
 
 		Log.i("State", "userLoggedIn");
-		FragmentsManager fragmentManager = FragmentsManager.getInstance();
-		fragmentManager.startBaseFragment(this);
+		FragmentsManager.startBaseFragment(this);
 	}
 }

@@ -109,8 +109,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 		holder.userItemLayout.setOnClickListener(v -> {
 
 			if (chatRoomList.get(position).chatRoomObject.conversationName != null) {
-				FragmentsManager fragmentManager = FragmentsManager.getInstance();
-				fragmentManager.startMessageFragment((AppCompatActivity) context, chatRoomList.get(position).chatRoomObject.conversationID);
+				FragmentsManager.startMessageFragment((AppCompatActivity) context, chatRoomList.get(position).chatRoomObject.conversationID);
 			}
 		});
 	}

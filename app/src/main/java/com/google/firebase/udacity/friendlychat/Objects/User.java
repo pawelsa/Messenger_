@@ -29,13 +29,13 @@ public class User {
         this.avatarUri = avatarUri;
     }
 
-    public User(String user_ID, String user_Name, boolean isOnline) {
+	public User(String user_ID, String user_Name, boolean isOnline, String avatarUri) {
         User_ID = user_ID;
         User_Name = user_Name;
         this.isOnline = isOnline;
         timestamp = new HashMap<>();
         timestamp.put("timestamp", ServerValue.TIMESTAMP);
-        this.avatarUri = "null";
+		this.avatarUri = avatarUri;
     }
 
     public User(Bundle bundle) {

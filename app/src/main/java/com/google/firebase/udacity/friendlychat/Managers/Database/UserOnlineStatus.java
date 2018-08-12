@@ -20,7 +20,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableMaybeObserver;
+import io.reactivex.schedulers.Schedulers;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
@@ -43,7 +46,6 @@ public class UserOnlineStatus {
 
 
 	private FirebaseAuth firebaseAuth;
-	private FirebaseAuth.AuthStateListener authStateListener;
 	private UserOnlineStatusListener userOnlineStatusListener;
 
 	private Activity mainActivity;
@@ -51,6 +53,7 @@ public class UserOnlineStatus {
 	private User currentUser;
 	private String currentUserID;
 
+	private Disposable authenticationListener;
 	private Disposable downloadCurrentUser;
 
 
@@ -60,31 +63,58 @@ public class UserOnlineStatus {
 	public void setupUserOnlineStatus(Activity activity, UserOnlineStatusListener userOnlineStatusListener) {
 		mainActivity = activity;
 		this.userOnlineStatusListener = userOnlineStatusListener;
-		//authorizationSetup();
 	}
 
-	public void authorizationSetup() {
-		if (firebaseAuth == null && authStateListener == null) {
-			firebaseAuth = FirebaseAuth.getInstance();
-			authStateListener = newAuthStateListener();
-			firebaseAuth.addAuthStateListener(authStateListener);
-		}
+	public void startAuthentication() {
+
+
+		if (authenticationListener == null || authenticationListener.isDisposed())
+			authenticationListener = Observable.create(emitter -> {
+
+				firebaseAuth = FirebaseAuth.getInstance();
+
+				final FirebaseAuth.AuthStateListener authStateListener = firebaseAuth -> {
+
+					FirebaseUser user = firebaseAuth.getCurrentUser();
+
+					emitter.onNext(user != null);
+				};
+
+				emitter.setCancellable(() -> firebaseAuth.removeAuthStateListener(authStateListener));
+
+				firebaseAuth.addAuthStateListener(authStateListener);
+			})
+					.map(result -> (boolean) result)
+					.distinctUntilChanged()
+					.doOnNext(loggedIn -> {
+						if (loggedIn)
+							Log.i("UserOnlineStatus", "User logged");
+						else
+							Log.i("UserOnlineStatus", "User not logged");
+					})
+					.subscribe(
+							loggedIn -> {
+								if (loggedIn)
+									startApplication();
+								else
+									launchLoginScreen();
+							},
+							Throwable::printStackTrace,
+							() -> Log.i("AuthStateListener", "Completed"));
+
 	}
 
-	private FirebaseAuth.AuthStateListener newAuthStateListener() {
-		return firebaseAuth -> {
 
-			FirebaseUser user = firebaseAuth.getCurrentUser();
+	private void startApplication() {
 
-			if (user == null) {
-				signOut();
-				mainActivity.startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
-			} else {
-				setupUserManager();
-			}
-		};
+		currentUserID = firebaseAuth.getCurrentUser().getUid();
+		downloadCurrentUser = getCurrentUserFromServer();
 	}
 
+	private void launchLoginScreen() {
+		//signOut();
+		mainActivity.startActivityForResult(createSignUpOrLoginScreenIntent(), RC_SIGN_IN);
+	}
 
 	private Intent createSignUpOrLoginScreenIntent() {
 
@@ -101,11 +131,11 @@ public class UserOnlineStatus {
 
 		if (requestCode == RC_SIGN_IN) {
 			if (resultCode == RESULT_OK && userOnlineStatusListener != null) {
-				authorizationSetup();
+				startAuthentication();
 
 			} else if (resultCode == RESULT_CANCELED) {
 				if (UserManager.currentUser != null && userOnlineStatusListener != null) {
-					authorizationSetup();
+					startAuthentication();
 				}
 				Toast.makeText(mainActivity.getApplicationContext(), mainActivity.getResources().getString(R.string.couldnt_login), Toast.LENGTH_SHORT).show();
 				mainActivity.finish();
@@ -114,16 +144,38 @@ public class UserOnlineStatus {
 
 	}
 
-	private void setupUserManager() {
-
-		currentUserID = getUserIDFromFirebaseAuth();
-		downloadCurrentUser = getCurrentUserFromServer();
-	}
-
 	private Disposable getCurrentUserFromServer() {
 
 		return SearchForUser.searchUserByID(currentUserID)
-				.subscribe(user -> {
+				.subscribeOn(Schedulers.io())
+				.doOnSuccess(sth -> Log.i("UserOnlineStatus", "doOnSuccess getUserFromServer"))
+				.doOnComplete(() -> Log.i("UserOnlineStatus", "doOnComplete getUserFromServer"))
+				.doOnDispose(() -> Log.i("UserOnlineStatus", "Disposing getUserFromServer"))
+				.subscribeWith(new DisposableMaybeObserver<User>() {
+					@Override
+					public void onSuccess(User user) {
+						currentUser = user;
+						UserManager.setCurrentUser(user);
+						userOnlineStatusListener.userLoggedIn();
+						Log.i("Current user", "Downloaded");
+						if (!UserManager.currentUser.isOnline)
+							changeUserOnlineStatus(true);
+						dispose();
+					}
+
+					@Override
+					public void onError(Throwable e) {
+						e.printStackTrace();
+					}
+
+					@Override
+					public void onComplete() {
+						if (currentUser == null)
+							createNewUserAndPush();
+						Log.i("UserOnlineStatus", "OnComplete");
+					}
+				})
+				/*.subscribe(user -> {
 							currentUser = user;
 							UserManager.setCurrentUser(user);
 							userOnlineStatusListener.userLoggedIn();
@@ -131,35 +183,47 @@ public class UserOnlineStatus {
 						},
 						Throwable::printStackTrace,
 						() -> {
-							if (currentUser == null) {
-								Log.i("Current user", "Not downloaded");
+							if (currentUser == null)
 								createNewUserAndPush();
-							} else {
-								Log.i("Current user", "Downloaded");
-							}
-						});
+							Log.i("UserOnlineStatus", "OnComplete");
+						})*/
+				;
 	}
 
 	private void createNewUserAndPush() {
 
-		String userID = getUserIDFromFirebaseAuth();
-		String displayName = firebaseAuth.getCurrentUser().getDisplayName();
+		Log.i("Current user", "Creating New User");
+		currentUser = getNewCurrentUser();
+		UserManager.setCurrentUser(currentUser);
 
-		currentUser = new User(userID, displayName, true);
-
-		DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child(USERS).child(userID);
+		DatabaseReference userReference = FirebaseDatabase.getInstance().getReference().child(USERS).child(currentUserID);
 		userReference.setValue(currentUser);
 	}
 
-	private String getUserIDFromFirebaseAuth() {
-		return firebaseAuth.getCurrentUser().getUid();
+	private User getNewCurrentUser() {
+
+		FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+		String userID = firebaseUser.getUid();
+		String displayName = firebaseUser.getDisplayName();
+		String photoUri = firebaseUser.getPhotoUrl().toString();
+
+		return new User(userID, displayName, true, photoUri);
 	}
 
 	public void signOut() {
-
 		changeUserOnlineStatus(false);
+
+		if (downloadCurrentUser != null && !downloadCurrentUser.isDisposed()) {
+			downloadCurrentUser.dispose();
+		}
+
 		currentUser = null;
 		currentUserID = null;
+		UserManager.setCurrentUser(null);
+
+		Log.i("UserOnlineStatus", "signOut " + downloadCurrentUser.isDisposed());
+
 		firebaseAuth.signOut();
 		FragmentsManager.destroy((AppCompatActivity) mainActivity);
 	}
@@ -167,16 +231,24 @@ public class UserOnlineStatus {
 	public void onPause() {
 		changeUserOnlineStatus(false);
 
-		if (authStateListener != null)
-			firebaseAuth.removeAuthStateListener(authStateListener);
+/*		if (authStateListener != null)
+			firebaseAuth.removeAuthStateListener(authStateListener);*/
+
+		if (authenticationListener != null && !authenticationListener.isDisposed()) {
+			authenticationListener.dispose();
+			authenticationListener = null;
+		}
 	}
 
 	public void onResume() {
-		changeUserOnlineStatus(true);
+		if (currentUser != null && currentUserID != null)
+			changeUserOnlineStatus(true);
 		//firebaseAuth.addAuthStateListener(authStateListener);
-		if (currentUser == null && downloadCurrentUser != null && downloadCurrentUser.isDisposed()) {
+		startAuthentication();
+
+/*		if (currentUser == null && downloadCurrentUser != null && downloadCurrentUser.isDisposed()) {
 			downloadCurrentUser = getCurrentUserFromServer();
-		}
+		}*/
 	}
 
 	private void changeUserOnlineStatus(boolean isOnline) {
@@ -196,11 +268,12 @@ public class UserOnlineStatus {
 	public void onDestroy() {
 
 		onPause();
-		authStateListener = null;
-		firebaseAuth = null;
+/*		authStateListener = null;
+		firebaseAuth = null;*/
 
 		if (downloadCurrentUser != null && !downloadCurrentUser.isDisposed()) {
 			downloadCurrentUser.dispose();
+			downloadCurrentUser = null;
 		}
 	}
 

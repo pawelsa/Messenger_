@@ -22,7 +22,7 @@ public class MessageSender {
 		final StorageReference photoReference = storagePhotosReference.child(conversationID).child(key);
 
 		photoReference.child(conversationID).putFile(photoUri).addOnSuccessListener(taskSnapshot -> {
-			Message friendlyMessageWithPhoto = new Message(UserManager.getCurrentUserID(), null, taskSnapshot.getDownloadUrl().toString());
+			Message friendlyMessageWithPhoto = new Message(UserManager.getCurrentUserID(), null, taskSnapshot.getUploadSessionUri().toString());
 			conversationReference.child(key).setValue(friendlyMessageWithPhoto).addOnSuccessListener(listener ->
 					Log.i("Message Send", "Photo"));
 		});
@@ -30,7 +30,7 @@ public class MessageSender {
 
 	public static void sendMessage(String text, String conversationID) {
 
-		Message newMessage = new Message(UserManager.getCurrentUserID(), text);
+		Message newMessage = new Message(text);
 
 		final DatabaseReference messageReference = databaseMessagesReference.child(conversationID);
 

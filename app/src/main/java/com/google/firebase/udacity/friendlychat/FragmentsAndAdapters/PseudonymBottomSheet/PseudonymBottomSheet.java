@@ -31,8 +31,8 @@ public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 	public void setupDialog(Dialog dialog, int style) {
 		super.setupDialog(dialog, style);
 
-		View contentView = View.inflate(getContext(), R.layout.pseudonym_change_layout, null);
-		pseudonymRecyclerView = contentView.findViewById(R.id.pseudonym_change_recycler_view);
+		View contentView = View.inflate(getContext(), R.layout.only_recycler_view, null);
+		pseudonymRecyclerView = contentView.findViewById(R.id.common_recyclerView);
 		dialog.setContentView(contentView);
 	}
 
@@ -60,6 +60,7 @@ public class PseudonymBottomSheet extends BottomSheetDialogFragment {
 	private Disposable startDownloadingChatRoom() {
 		return ManageDownloadingChatRooms.downloadChatRoom(conversationID)
 				.filter(downloadedChatRoom -> downloadedChatRoom.conversationalist.size() + 1 == downloadedChatRoom.chatRoomObject.participants.size())
+				.filter(downloadChatRoom -> downloadChatRoom != null && downloadChatRoom.chatRoomObject != null)
 				.subscribe(downloadedChatRoom -> adapter.add(downloadedChatRoom));
 	}
 

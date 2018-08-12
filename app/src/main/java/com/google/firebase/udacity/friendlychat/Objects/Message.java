@@ -15,10 +15,10 @@
  */
 package com.google.firebase.udacity.friendlychat.Objects;
 
-import android.util.Log;
-
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Message {
@@ -26,7 +26,7 @@ public class Message {
 	public String text;
 	public String userID;
 	public String photoUrl;
-	public String timestamp;
+	public Map<String, Object> timestamp;
 /*    public Map usersWhoRead;
     public int status;*/
 
@@ -38,16 +38,15 @@ public class Message {
 		this.text = text;
 		this.userID = userID;
 		this.photoUrl = photoUrl;
-		Map time = ServerValue.TIMESTAMP;
-		this.timestamp = String.valueOf(time.get("timestamp"));
+		timestamp = new HashMap<>();
+		timestamp.put("timestamp", ServerValue.TIMESTAMP);
 	}
 
-	public Message(String userID, String text) {
+	public Message(String text) {
 		this.text = text;
-		this.userID = userID;
-		Map time = ServerValue.TIMESTAMP;
-		Log.i("Message time", Long.toString((Long) time.get("timestamp")));
-		this.timestamp = String.valueOf(time.get("timestamp"));
+		this.userID = UserManager.getCurrentUserID();
+		timestamp = new HashMap<>();
+		timestamp.put("timestamp", ServerValue.TIMESTAMP);
 	}
 
 	public String getText() {
@@ -74,11 +73,11 @@ public class Message {
 		this.photoUrl = photoUrl;
 	}
 
-	public String getTimestamp() {
+	public Map getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(String timestamp) {
+	public void setTimestamp(HashMap timestamp) {
 		this.timestamp = timestamp;
 	}
 }

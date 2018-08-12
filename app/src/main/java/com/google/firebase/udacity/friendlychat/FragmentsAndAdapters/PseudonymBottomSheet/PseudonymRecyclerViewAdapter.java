@@ -71,7 +71,8 @@ public class PseudonymRecyclerViewAdapter extends RecyclerView.Adapter<Pseudonym
 			users = chatRoom.conversationalist;
 			users.add(UserManager.getCurrentUser());
 
-			updatingPseudonyms = startUpdatingPseudonyms(chatRoom.chatRoomObject.participants);
+			if (updatingPseudonyms == null || updatingPseudonyms.isDisposed())
+				updatingPseudonyms = startUpdatingPseudonyms(chatRoom.chatRoomObject.participants);
 
 			notifyDataSetChanged();
 		}
@@ -97,7 +98,8 @@ public class PseudonymRecyclerViewAdapter extends RecyclerView.Adapter<Pseudonym
 	}
 
 	public void onResume() {
-		updatingPseudonyms = startUpdatingPseudonyms(chatRoom.chatRoomObject.participants);
+		if (chatRoom != null && (updatingPseudonyms == null || updatingPseudonyms.isDisposed()))
+			updatingPseudonyms = startUpdatingPseudonyms(chatRoom.chatRoomObject.participants);
 	}
 
 	public void onPauseAndonDestroy() {

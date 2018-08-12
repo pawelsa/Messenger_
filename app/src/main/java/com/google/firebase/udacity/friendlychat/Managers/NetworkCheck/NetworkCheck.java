@@ -9,7 +9,7 @@ import com.cantrowitz.rxbroadcast.RxBroadcast;
 
 import io.reactivex.Observable;
 
-public class NetworkCheckReceiver {
+public class NetworkCheck {
 
 	public static Observable<Boolean> connectivityChanges(final Context context, final ConnectivityManager connectivityManager) {
 		return RxBroadcast.fromBroadcast(context, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))

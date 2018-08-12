@@ -4,10 +4,13 @@ import android.content.res.Resources;
 
 import com.google.firebase.udacity.friendlychat.R;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class LastSeenTime {
+public class TimeConverter {
 
 	public static String getLastSeenOnlineStatusMessage(long lastSeen, Resources resources) {
 
@@ -42,5 +45,16 @@ public class LastSeenTime {
 		Date lastOnline = new Date(time);
 		Date actualTime = new Date();
 		return actualTime.getTime() - lastOnline.getTime();
+	}
+
+	public static String getSendTime(long timestamp) {
+
+		Date date = new Date(timestamp);
+		long diff = TimeConverter.returnTimeSinceLastOnlineTime(timestamp);
+		DateFormat f = TimeUnit.MICROSECONDS.toDays(diff) > 6 ?
+				new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.UK) :
+				new SimpleDateFormat("EEE HH:mm", Locale.UK);
+
+		return f.format(date);
 	}
 }

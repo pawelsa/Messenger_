@@ -138,7 +138,7 @@ public class UserSettingsFragment extends Fragment {
 			setAvatarPhoto(getView());
 			StorageReference photosReference = FirebaseStorage.getInstance().getReference().child("Images").child(UserManager.getCurrentUserID());
 			photosReference.putFile(photo).addOnSuccessListener(taskSnapshot -> {
-				Uri photoUri = taskSnapshot.getDownloadUrl();
+				Uri photoUri = taskSnapshot.getUploadSessionUri();
 				UserManager.setCurrentUserAvatarUri(photoUri);
 			});
 		}

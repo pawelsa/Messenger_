@@ -24,8 +24,8 @@ public class ColorBottomSheet extends BottomSheetDialogFragment {
 	public void setupDialog(Dialog dialog, int style) {
 		super.setupDialog(dialog, style);
 
-		View contentView = View.inflate(getContext(), R.layout.color_bottom_sheet_fragment, null);
-		colorRecyclerView = contentView.findViewById(R.id.color_recyclerView);
+		View contentView = View.inflate(getContext(), R.layout.only_recycler_view, null);
+		colorRecyclerView = contentView.findViewById(R.id.common_recyclerView);
 		dialog.setContentView(contentView);
 	}
 

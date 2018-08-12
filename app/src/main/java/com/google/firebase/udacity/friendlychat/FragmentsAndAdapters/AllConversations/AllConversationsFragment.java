@@ -8,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,11 +19,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
-import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.UserSettingsFragment;
+import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.AddUser.AddUserSheet;
 import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
 import com.google.firebase.udacity.friendlychat.Managers.App.FragmentsManager;
+import com.google.firebase.udacity.friendlychat.Managers.Database.ConversationRequest;
 import com.google.firebase.udacity.friendlychat.Managers.Database.ManageDownloadingChatRooms;
+import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
 import com.google.firebase.udacity.friendlychat.R;
 
 import io.reactivex.disposables.Disposable;
@@ -35,9 +37,12 @@ public class AllConversationsFragment extends Fragment {
 	public static final String SETTINGS_FRAGMENT = "settings_fragment";
 
 	private UsersAdapter adapter;
+	private FrameLayout newUserInfo;
 	private RecyclerView allUsersRecyclerView;
 	private FloatingActionButton searchButton;
+
 	private Disposable downloadChatRooms;
+	private Disposable getNumberOfInvites;
 
 
 	@Nullable
@@ -52,6 +57,7 @@ public class AllConversationsFragment extends Fragment {
 
 		allUsersRecyclerView = view.findViewById(R.id.allUsersList);
 		searchButton = view.findViewById(R.id.floatingActionButton);
+		newUserInfo = view.findViewById(R.id.new_user_requests);
 	}
 
 	@Override
@@ -61,8 +67,27 @@ public class AllConversationsFragment extends Fragment {
 		setHasOptionsMenu(true);
 
 		createAdapterAndSetupRecyclerView();
-		setChatRoomDownloader();
-		searchButton = getActivity().findViewById(R.id.floatingActionButton);
+		if (UserManager.getCurrentUser() != null)
+			setChatRoomDownloader();
+
+		if (UserManager.getCurrentUser() != null)
+			getNumberOfInvites = ConversationRequest.getNumberOfRequests()
+					.filter(count -> count > 0)
+					.subscribe(count -> {
+								Log.i("Count invites", Long.toString(count));
+								newUserInfo.setVisibility(View.VISIBLE);
+
+								newUserInfo.setOnClickListener(v -> {
+									AddUserSheet addUserSheet = new AddUserSheet();
+									addUserSheet.show(getActivity().getSupportFragmentManager(), addUserSheet.getTag());
+								});
+								getNumberOfInvites.dispose();
+							},
+							Throwable::printStackTrace,
+							() -> Log.i("Count invites", "Completed"))
+					;
+
+
 		manageFloatingActionBar();
 	}
 
@@ -75,15 +100,22 @@ public class AllConversationsFragment extends Fragment {
 
 	private void setChatRoomDownloader() {
 
-		downloadChatRooms = ManageDownloadingChatRooms.downloadChatRoomsFromDB()
-				.subscribe(roomObject -> adapter.addConversationToAdapter(roomObject));
+		if (downloadChatRooms == null || downloadChatRooms.isDisposed()) {
+			Log.i("Starting", "downloadChatRoom");
+			downloadChatRooms = ManageDownloadingChatRooms.downloadChatRoomsFromDB()
+					.subscribe(roomObject -> {
+								adapter.addConversationToAdapter(roomObject);
+								Log.i("New ChatRoom", "added to adapter");
+							},
+							Throwable::printStackTrace,
+							() -> Log.i("downloadChatRoom", "Finish"));
+		}
 	}
 
 	private void manageFloatingActionBar() {
 		if (searchButton != null) {
 			searchButton.setOnClickListener(v -> {
-				FragmentsManager fragmentManager = FragmentsManager.getInstance();
-				fragmentManager.startSearchUserFragment((AppCompatActivity) getActivity());
+				FragmentsManager.startSearchUserFragment((AppCompatActivity) getActivity());
 				Log.i("FAB", "clicked");
 			});
 		}
@@ -93,19 +125,36 @@ public class AllConversationsFragment extends Fragment {
 	public void onResume() {
 		super.onResume();
 		manageActionBar();
+
+		Log.i("AllConversationsFragmen", "onResume");
+		if (UserManager.getCurrentUser() != null)
+			setChatRoomDownloader();
 	}
 
 	private void manageActionBar() {
+
 		Toolbar actionBar = getActivity().findViewById(R.id.conversations_toolbar);
 		((AppCompatActivity) getActivity()).setSupportActionBar(actionBar);
 
 		if (actionBar != null) {
+			Log.i("AllConversationsFragmen", "manageActionBar");
 			actionBar.setTitle(R.string.app_name);
 			actionBar.setSubtitle("");
 			actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
 			int statusBarColor = ColorManager.getStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
 			if (statusBarColor != -1 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 				getActivity().getWindow().setStatusBarColor(statusBarColor);
+		}
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+
+		Log.i("AllConversationsFragmen", "onPause");
+		if (downloadChatRooms != null && !downloadChatRooms.isDisposed()) {
+			Log.i("Disposing", "downloadChatRoom");
+			downloadChatRooms.dispose();
 		}
 	}
 
@@ -120,7 +169,7 @@ public class AllConversationsFragment extends Fragment {
 		if (downloadChatRooms != null && !downloadChatRooms.isDisposed()) {
 			downloadChatRooms.dispose();
 		}
-		Log.i("State", "OnDestroy");
+		Log.i("AllConversationsFragmen", "OnDestroy");
 	}
 
 	@Override
@@ -137,10 +186,7 @@ public class AllConversationsFragment extends Fragment {
 		switch (item.getItemId()) {
 			case R.id.settings_menu:
 
-				UserSettingsFragment conversationsFragment = UserSettingsFragment.getInstance();
-
-				FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
-				fragmentTransaction.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right).replace(R.id.messageFragment, conversationsFragment, SETTINGS_FRAGMENT).addToBackStack(null).commit();
+				FragmentsManager.startSettingsFragment((AppCompatActivity) getActivity());
 				return true;
 
 			default:

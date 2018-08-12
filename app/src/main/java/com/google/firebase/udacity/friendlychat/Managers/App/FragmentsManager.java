@@ -11,11 +11,95 @@ import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.AllConversa
 import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.ConversationInfoFragment;
 import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.Messages.MessagesFragment;
 import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.SearchUser.SearchUserFragment;
+import com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.UserSettingsFragment;
 import com.google.firebase.udacity.friendlychat.R;
 
+import static com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.AllConversations.AllConversationsFragment.SETTINGS_FRAGMENT;
 import static com.google.firebase.udacity.friendlychat.FragmentsAndAdapters.Messages.MessagesFragment.CONVERSATION_ID;
 
+
 public class FragmentsManager {
+
+	public static final String CONVERSATIONID = "ConversationID";
+	private static final String BASE_FRAGMENT = "main_fragment";
+
+	public static void startMessageFragment(AppCompatActivity activity, String conversationID) {
+		Log.i("FragmentsManager", "Message Fragment");
+		MessagesFragment messagesFragment = new MessagesFragment();
+		Bundle bundle = new Bundle();
+		bundle.putString(CONVERSATION_ID, conversationID);
+		messagesFragment.setArguments(bundle);
+
+		FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
+		fragmentTransaction/*.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)*/
+				.replace(R.id.messageFragment, messagesFragment, "messageFragment")
+				.addToBackStack("main_fragment_replace")
+				.commit();
+
+	}
+
+	public static void startSettingsFragment(AppCompatActivity activity) {
+		Log.i("FragmentsManager", "Settings Fragment");
+		UserSettingsFragment conversationsFragment = UserSettingsFragment.getInstance();
+
+		FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
+		fragmentTransaction/*.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)*/
+				.replace(R.id.messageFragment, conversationsFragment, SETTINGS_FRAGMENT)
+				.addToBackStack(null).commit();
+	}
+
+	public static void startBaseFragment(AppCompatActivity activity) {
+		Log.i("FragmentsManager", "Base Fragment");
+		AllConversationsFragment conversationsFragment = new AllConversationsFragment();
+		FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
+		fragmentTransaction.add(R.id.messageFragment, conversationsFragment, BASE_FRAGMENT).commit();
+	}
+
+	public static void startSearchUserFragment(AppCompatActivity activity) {
+		Log.i("FragmentsManager", "SearchUser Fragment");
+		SearchUserFragment searchUserFragment = new SearchUserFragment();
+		FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
+		fragmentTransaction/*.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)*/
+				.replace(R.id.messageFragment, searchUserFragment, "messageFragment")
+				.addToBackStack("main_fragment_replace")
+				.commit();
+	}
+
+	public static void startConversationInfoFragment(AppCompatActivity activity, Bundle args) {
+		Log.i("FragmentsManager", "Conversation Info Fragment");
+		ConversationInfoFragment conversationInfoFragment = new ConversationInfoFragment();
+
+		conversationInfoFragment.setArguments(args);
+
+		FragmentTransaction fragmentTransaction = activity.getSupportFragmentManager().beginTransaction();
+		fragmentTransaction/*.setCustomAnimations(R.animator.enter_from_right, R.animator.none, R.animator.none, R.animator.exit_to_right)*/
+				.replace(R.id.messageFragment, conversationInfoFragment, "infoFragment")
+				.addToBackStack(null)
+				.commit();
+	}
+
+	public static void goBack(Activity activity) {
+		Log.i("FragmentsManager", "goBack");
+		FragmentManager fm = ((AppCompatActivity) activity).getSupportFragmentManager();
+		//Log.i("Fragment quantity", Integer.toString(fm.getBackStackEntryCount()));
+		if (fm.getBackStackEntryCount() > 0) {
+			fm.popBackStack();
+		}
+	}
+
+	public static void destroy(AppCompatActivity activity) {
+		Log.i("FragmentsManager", "destroy");
+		FragmentManager fragmentManager = activity.getSupportFragmentManager();
+		//fragmentManager.popBackStack();
+		for (int i = 0; i < fragmentManager.getBackStackEntryCount(); ++i) {
+			fragmentManager.popBackStack();
+		}
+	}
+}
+
+
+
+/*public class FragmentsManager {
 
 	private static final FragmentsManager ourInstance = new FragmentsManager();
 	private AllConversationsFragment conversationsFragment;
@@ -100,4 +184,4 @@ public class FragmentsManager {
 		FragmentManager fragmentManager = activity.getSupportFragmentManager();
 		fragmentManager.popBackStack();
 	}
-}
+}*/

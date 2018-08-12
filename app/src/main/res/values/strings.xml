@@ -27,6 +27,7 @@
 
     <string name="couldnt_login">Couldn\'t login</string>
     <string name="avatar_picture">Avatar picture</string>
+    <string name="new_user_requests">You\'ve got new user requests</string>
 
     <string name="no_internet_connection">No internet connection</string>
 

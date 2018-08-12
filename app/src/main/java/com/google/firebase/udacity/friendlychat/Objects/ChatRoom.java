@@ -2,7 +2,9 @@ package com.google.firebase.udacity.friendlychat.Objects;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatRoom {
 
@@ -47,5 +49,14 @@ public class ChatRoom {
 			result = this.chatRoomObject.conversationID.equals(other.chatRoomObject.conversationID);
 		}
 		return result;
+	}
+
+	public static Map<String, Object> toMap(ChatRoomObject chatRoomObject) {
+		Map<String, Object> chatRoomMap = new HashMap<>();
+		chatRoomMap.put("chatColor", chatRoomObject.chatColor);
+		chatRoomMap.put("conversationID", chatRoomObject.conversationID);
+		chatRoomMap.put("participants", chatRoomObject.participants);
+
+		return chatRoomMap;
 	}
 }

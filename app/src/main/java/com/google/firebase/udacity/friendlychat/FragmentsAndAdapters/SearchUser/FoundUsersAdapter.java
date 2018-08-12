@@ -97,8 +97,7 @@ public class FoundUsersAdapter extends RecyclerView.Adapter<FoundUsersAdapter.Fo
 
 					ConversationRequest.checkIfConversationExists(user.User_ID, context)
 							.subscribe(key -> {
-										FragmentsManager fragmentManager = FragmentsManager.getInstance();
-										fragmentManager.startMessageFragment((AppCompatActivity) context, key);
+										FragmentsManager.startMessageFragment((AppCompatActivity) context, key);
 										Log.i("Conv ID", key);
 									},
 									Throwable::printStackTrace,

@@ -216,7 +216,7 @@ public class TestObject {
 
 	private void sendChatRoomObject() {
 
-		ChatRoomObject chatRoomObject = new ChatRoomObject("conversationID", "myID", "conversationalistID", "its name");
+		ChatRoomObject chatRoomObject = new ChatRoomObject("conversationID", "conversationalistID", "its name");
 
 		DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("test");
 		reference.push().setValue(chatRoomObject);

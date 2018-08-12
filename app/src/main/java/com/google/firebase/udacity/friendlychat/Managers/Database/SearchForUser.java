@@ -1,6 +1,7 @@
 package com.google.firebase.udacity.friendlychat.Managers.Database;
 
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.udacity.friendlychat.FirebaseWrapper.RxChildEventListener;
@@ -17,13 +18,11 @@ public class SearchForUser {
 
 	public static Maybe<User> searchUserByID(String userID) {
 
-		return RxSingleEventListener.observeSingleValueEvent(getUserQueryByID(userID))
+		final DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child(UserManager.USERS).child(userID);
+
+		return RxSingleEventListener.observeSingleValueEvent(userRef)
 				.filter(DataSnapshot::exists)
 				.map(dataSnapshot -> dataSnapshot.getValue(User.class));
-	}
-
-	private static Query getUserQueryByID(String userID) {
-		return FirebaseDatabase.getInstance().getReference().child(UserManager.USERS).child(userID);
 	}
 
 	public static Flowable<User> searchUserByName(String userSearch) {

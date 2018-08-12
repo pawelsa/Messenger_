@@ -9,7 +9,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CenterInside;
@@ -17,6 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.udacity.friendlychat.Managers.App.ColorManager;
+import com.google.firebase.udacity.friendlychat.Managers.App.TimeConverter;
 import com.google.firebase.udacity.friendlychat.Managers.Database.UserManager;
 import com.google.firebase.udacity.friendlychat.Objects.ChatRoom;
 import com.google.firebase.udacity.friendlychat.Objects.Message;
@@ -115,6 +118,7 @@ public class MessagesAdapter extends RecyclerView.Adapter {
 	private class MyMessageHolder extends RecyclerView.ViewHolder {
 		TextView messageText, timeText;
 		ImageView messageImage;
+		RelativeLayout mainMessage;
 
 		MyMessageHolder(View itemView) {
 			super(itemView);
@@ -122,34 +126,52 @@ public class MessagesAdapter extends RecyclerView.Adapter {
 			messageText = itemView.findViewById(R.id.my_message_text);
 			timeText = itemView.findViewById(R.id.my_message_time);
 			messageImage = itemView.findViewById(R.id.my_message_image);
+			mainMessage = itemView.findViewById(R.id.relativeLayout_myMessage);
 		}
 
 		void bind(Message message) {
+			bind(message, true);
+		}
+
+		void bind(Message message, boolean myMessage) {
+
+			mainMessage.setOnLongClickListener(v -> {
+				Toast.makeText(context, "More options", Toast.LENGTH_SHORT).show();
+				return true;
+			});
 
 			if (message.getText() != null) {
 				messageText.setText(message.getText());
-				Drawable background = context.getResources().getDrawable(R.drawable.message_rectangle).getConstantState().newDrawable();
+				setBackground(myMessage);
 
-				if (background instanceof GradientDrawable) {
-					GradientDrawable gradientDrawable = (GradientDrawable) background;
-					gradientDrawable.setColor(Color.parseColor(ColorManager.getHexColor(chatRoom.chatRoomObject.chatColor)));
-					messageText.setBackground(gradientDrawable);
-				}
-				//messageText.setBackground(drawable);
 			} else if (message.getPhotoUrl() != null) {
 				messageText.setVisibility(View.GONE);
 				messageImage.setVisibility(View.VISIBLE);
 				Glide.with(context).load(message.getPhotoUrl()).apply(new RequestOptions().transforms(new CenterInside(), new RoundedCorners(40))).into(messageImage);
 			}
 
-			// Format the stored timestamp into a readable String using method.
-			//timeText.setText(Utils.formatDateTime(message.getCreatedAt()));
+			if (message.timestamp != null)
+				mainMessage.setOnClickListener(v -> {
+					String sendTime = TimeConverter.getSendTime((long) message.timestamp.get("timestamp"));
+					timeText.setText(sendTime);
+					timeText.setVisibility(timeText.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+				});
+		}
+
+		void setBackground(boolean myMessage) {
+			Drawable background = context.getResources().getDrawable(R.drawable.message_rectangle).getConstantState().newDrawable();
+
+			if (background instanceof GradientDrawable) {
+				GradientDrawable gradientDrawable = (GradientDrawable) background;
+				gradientDrawable.setColor(Color.parseColor(myMessage ? ColorManager.getHexColor(chatRoom.chatRoomObject.chatColor) : "#375D81"));
+				messageText.setBackground(gradientDrawable);
+			}
 		}
 	}
 
-	private class ReceivedMessageHolder extends RecyclerView.ViewHolder {
-		TextView messageText, timeText, userName;
-		ImageView profileImage, messageImage;
+	private class ReceivedMessageHolder extends MyMessageHolder {
+		TextView userName;
+		ImageView profileImage;
 
 		ReceivedMessageHolder(View itemView) {
 			super(itemView);
@@ -159,37 +181,18 @@ public class MessagesAdapter extends RecyclerView.Adapter {
 			userName = itemView.findViewById(R.id.text_message_name);
 			profileImage = itemView.findViewById(R.id.image_message_profile);
 			messageImage = itemView.findViewById(R.id.image_message_body);
+			mainMessage = itemView.findViewById(R.id.relativeLayout_receivedMessage);
 		}
 
 		void bind(Message message) {
+			super.bind(message, false);
 
-			if (message.getText() != null) {
-				messageText.setText(message.getText());
-
-				Drawable background = context.getResources().getDrawable(R.drawable.message_rectangle).getConstantState().newDrawable();
-
-				if (background instanceof GradientDrawable) {
-					GradientDrawable gradientDrawable = (GradientDrawable) background;
-					gradientDrawable.setColor(Color.parseColor("#375D81"));
-					messageText.setBackground(gradientDrawable);
-				}
-			} else if (message.getPhotoUrl() != null) {
-				messageText.setVisibility(View.GONE);
-				messageImage.setVisibility(View.VISIBLE);
-				Glide.with(context).load(message.getPhotoUrl()).apply(new RequestOptions().transforms(new CenterInside(), new RoundedCorners(40))).into(messageImage);
-				/*messageImage.setOnClickListener(view -> {
-					Log.i("MESSAGE_RECEIVED_P", message.getText() != null ? message.getText() : message.getPhotoUrl());
-					Log.i("Info", "ID: " + Integer.toString(id) + " " + messageList.get(id).getText() != null ? messageList.get(id).getText() : messageList.get(id).getPhotoUrl());
-				});*/
-			}
-
-			// Format the stored timestamp into a readable String using method.
-			//timeText.setText(Utils.formatDateTime(message.getCreatedAt()));
 
 			Map<String, String> userData = (Map<String, String>) chatRoom.chatRoomObject.participants.get(message.getUserID());
 			String userN = userData.get("Name");
 			userName.setText(userN);
 
+			//TODO: make it better
 			User user = new User();
 
 			for (User mUser : chatRoom.conversationalist) {

@@ -18,10 +18,11 @@ public class ChatRoomObject {
 	
 	ChatRoomObject() {
     }
-	
-	public ChatRoomObject(String conversationID, String myID, String conversationalistID, String conversationalistName) {
+
+	public ChatRoomObject(String conversationID, String conversationalistID, String conversationalistName) {
 		participants = new HashMap<>();
 
+		String myID = UserManager.getCurrentUserID();
 		participants.put(myID, ChatRoomUserObject.createUser(myID, UserManager.getCurrentUserName()));
 		participants.put(conversationalistID, ChatRoomUserObject.createUser(conversationalistID, conversationalistName));
 		this.conversationID = conversationID;
